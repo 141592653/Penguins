@@ -2,6 +2,7 @@ language: c++
 sudo: required
 
 before_install:
+  - sudo apt-add-repository ppa:avsm/ppa
   - sudo apt-get -qq update
   - sudo apt-get install -y ocaml ocaml-native-compilers camlp4-extra opam
 
