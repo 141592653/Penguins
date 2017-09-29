@@ -1,5 +1,6 @@
-sudo: false
 language: c
+sudo: false
+
 script: bash -ex .travis-ci.sh
 env:
   - OCAML_VERSION=4.04.0 OPAM_VERSION=1.2.2
