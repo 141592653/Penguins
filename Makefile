@@ -4,3 +4,6 @@ BUILD=ocamlbuild \
 
 default:
 	$(BUILD) src/penguins.native
+
+test:
+	$(BUILD) src/test.native
