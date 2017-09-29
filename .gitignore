@@ -6,6 +6,7 @@
 *.cmx
 *.cmxs
 *.cmxa
+*~
 
 _build/
 

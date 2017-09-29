@@ -1,0 +1,8 @@
+hex.cmo : hex.cmi
+hex.cmx : hex.cmi
+main.cmo : hex.cmi
+main.cmx : hex.cmx
+bitset.cmi :
+hex.cmi :
+paths.cmi : hex.cmi bitset.cmi
+priority.cmi :
