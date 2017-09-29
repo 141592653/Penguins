@@ -7,7 +7,7 @@ OPAM_DEPENDS="ocamlfind ounit lablgtk ocamlbuild"
 
 yes | opam init
 yes | opam switch 4.04.0
-yes | opam install ${OPAM_DEPENDS}
+opam install --yes ${OPAM_DEPENDS}
 
 eval `opam config env`
 make
