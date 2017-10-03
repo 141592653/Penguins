@@ -7,3 +7,6 @@ default:
 
 test:
 	$(BUILD) src/test.native
+
+doc:
+	$(BUILD) src/penguins.docdir/index.html

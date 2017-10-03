@@ -1,8 +1,10 @@
 open GMain
 open GdkKeysyms
 
+       
 let locale = GtkMain.Main.init ()
 
+(** This is the main function*)
 let main () =
   let window = GWindow.window ~width:320 ~height:240
                               ~title:"Simple lablgtk program" () in
