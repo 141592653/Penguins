@@ -58,7 +58,7 @@ let print_bool_ppg f b =
 let pp_grid f g = 
   if not (Array.length g = 0) then 
     begin
-      Format.fprintf f "@[<v 2>  ";
+      Format.fprintf f "@[<v 0>";
 
       (*ligne du haut*)
       for i = 1 to 2*Array.length g.(0) + 2 do
@@ -211,7 +211,8 @@ let from_channel in_chan =
 	match line.[!pos_line] with
 	|' ' -> ()
 	|'#' -> start_pos := (!nb_lines,!c);
-		grid_ret.(!nb_lines).(!c) <- true
+	(*grid_ret.(!nb_lines).(!c) <- true*)
+		(*TODO ? la position du pingouin n'est pas une case de banquise*)
 	|_ -> grid_ret.(!nb_lines).(!c) <- true
       end;      
       c := !c + 1;
