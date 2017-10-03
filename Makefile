@@ -10,3 +10,6 @@ test:
 
 doc:
 	$(BUILD) src/penguins.docdir/index.html
+
+clean:
+	rm -rf _build
