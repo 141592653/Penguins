@@ -9,7 +9,7 @@ test:
 	$(BUILD) src/test.native
 
 doc:
-	$(BUILD) src/penguins.docdir/index.html
+	$(BUILD) -ocamldoc "ocamldoc -charset utf8" src/penguins.docdir/index.html
 
 clean:
 	rm -rf _build
