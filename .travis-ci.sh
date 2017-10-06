@@ -10,5 +10,4 @@ yes | opam switch 4.04.0
 opam install --yes ${OPAM_DEPENDS}
 
 eval `opam config env`
-make
-make test
+make && make test && make doc

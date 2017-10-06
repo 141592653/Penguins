@@ -9,6 +9,7 @@
 *~
 
 _build/
+doc/
 
 *.byte
 *.native
