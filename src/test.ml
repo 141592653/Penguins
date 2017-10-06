@@ -1,6 +1,7 @@
 open OUnit2;;
-
-
+open Player
+open Map
+       
 let suite =
 "suite">:::
  []
