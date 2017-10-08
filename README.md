@@ -15,5 +15,5 @@
 * Install dependencies (ocamlbuild, ounit, lablgtk):\
 `opam install ocamlfind ounit lablgtk ocamlbuild`
 * Run \
-`make & ./penguins.native`
+`make && ./penguins.native`
 * Enjoy ;) !
