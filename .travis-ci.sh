@@ -1,4 +1,4 @@
-OPAM_DEPENDS="ocamlfind ounit lablgtk ocamlbuild"
+OPAM_DEPENDS="ocamlfind ounit lablgtk ocamlbuild yojson"
 
 # case "$OCAML_VERSION,$OPAM_VERSION" in
 # 4.04.0,1.2.2) ppa=avsm/ocaml44+opam12 ;;

@@ -1,4 +1,4 @@
-PACKAGES=-package lablgtk2 -package oUnit
+PACKAGES=-package lablgtk2 -package oUnit -package yojson
 BUILD=ocamlbuild \
 	$(PACKAGES)
 
