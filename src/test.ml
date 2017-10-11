@@ -1,11 +1,10 @@
 open OUnit2
 open Player
-open Parser
 
        
 let suite =
 "suite">:::
- []
+ Parser.tests
 ;;
 
 let () =

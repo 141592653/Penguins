@@ -10,9 +10,7 @@ module type map = sig
     (**Tableau représentant la map*)
     val map : elt array array
 		  
-    (*
-     *Tableau contenant l'ensemble des joueurs
-     * Liste*)
+    (**Tableau contenant l'ensemble des joueurs*)
     val players : Player.player array
 				
     (**Numéro du joueur dont c'est le tour*)
@@ -31,3 +29,4 @@ module type mapInfo = sig
 (** Crée un module Map à partir d'un nom de fichier *)
 module CreateMap (MI:mapInfo):map
 			
+val tests : OUnit2.test list
