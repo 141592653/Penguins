@@ -56,7 +56,7 @@ module CreateMap (MI:mapInfo): map = struct
     end
     |"map" -> begin
       match snd npm with
-	|`String s -> name := s
+	|`String s -> map := s
         |_ -> failwith "The name of the file containing the map \
 			should be a string"
     end
@@ -95,7 +95,9 @@ module CreateMap (MI:mapInfo): map = struct
 			Here is the log of the json parser : "
 		      ^log)
     
-  let (name,players,map) = parse_main_json json
+  let (name,players,map) = parse_main_json json 
+      
+  
   let map = [|[||]|]
   let players = [||]
   let turn = 0
@@ -137,7 +139,7 @@ let test_wrong_json2 ctxt =
 		  
 let test_parser ctxt =
   assert_equal TestMap.turn 0
-
+	       
 let tests = ["wrong json">::test_wrong_json;
 	     "wrong json2">::test_wrong_json2;
 	     "parser">::test_parser]

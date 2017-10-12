@@ -16,6 +16,7 @@
  * joueurs sur la carte.
  * L'ordre des joueurs est le même que l'ordre d'apparition des joueurs 
  * lorsqu'on lit la carte de gauche à droite et de haut en bas.
+
  * 
  * Par défaut, on n'est pas obligé de préciser "map" : le parser ira chercher
  * nom_carte.txt où nom_carte est le nom du fichier json sans l'extension du 
