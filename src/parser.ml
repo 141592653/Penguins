@@ -46,22 +46,28 @@ module CreateMap (MI:mapInfo): map = struct
 		       ^MI.json_file
 		       ^" should be an Associative list")
       
-  (*parse name players or map*)
-  let parse_npm  name players map npm =
-    match fst npm with
+  (*parse name players map or turn*)
+  let parse_npmt  name players map turn npmt =
+    match fst npmt with
     |"name" -> begin
-      match snd npm with
+      match snd npmt with
 	|`String s -> name := s
         |_ -> failwith "The name of a map should be a string"
     end
     |"map" -> begin
-      match snd npm with
+      match snd npmt with
 	|`String s -> map := s
         |_ -> failwith "The name of the file containing the map \
 			should be a string"
-    end
-    |"players" -> players := parse_players (snd npm)
-    |_ -> failwith ("The entry "^(fst npm)^ " is not understood")
+	    end
+    |"turn" -> begin
+      match snd npmt with
+	|`Int i -> turn := i
+        |_ -> failwith "The name of the file containing the map \
+			should be a string"
+	    end
+    |"players" -> players := parse_players (snd npmt)
+    |_ -> failwith ("The entry "^(fst npmt)^ " is not understood")
 
   (*This is the parser of a json file*)
   let parse_main_json json_a = 
@@ -70,15 +76,17 @@ module CreateMap (MI:mapInfo): map = struct
 				  (String.length MI.json_file - 5) in 
     let name_ref = ref default_name
     and players_ref = ref []
-    and map_ref = ref (default_name ^".txt") in
+    and map_ref = ref (default_name ^".txt")
+    and turn_ref = ref 0 in
     begin
       match json_a with
-      | `Assoc l -> List.iter (parse_npm name_ref players_ref map_ref) l
+      | `Assoc l -> List.iter (parse_npmt name_ref players_ref map_ref
+					 turn_ref) l
       | _ -> failwith ("The main structure of "
 		       ^MI.json_file
 		       ^" should be an Associative list")
     end;
-    (!name_ref,!players_ref,!map_ref)
+    (!name_ref,!players_ref,!map_ref,!turn_ref)
 
 
 
@@ -95,12 +103,11 @@ module CreateMap (MI:mapInfo): map = struct
 			Here is the log of the json parser : "
 		      ^log)
     
-  let (name,players,map) = parse_main_json json 
+  let (name,players,map,turn) = parse_main_json json 
       
   
   let map = [|[||]|]
   let players = [||]
-  let turn = 0
   let move pl_name move = ()
   
 end
