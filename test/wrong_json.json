@@ -1,0 +1,10 @@
+{
+    "name" : "Niveau 1",
+    "players" :
+    {
+	"beauGosseDu84" : 1,
+	"42" : 2,
+	"cotcotcodète" : 3
+    }
+    "map" : "map_test.txt"
+}

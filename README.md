@@ -12,8 +12,8 @@
 * Switching to Ocaml's version 4.04.0 : \
 `opam init`\
 `opam switch 4.04.0`
-* Install dependencies (ocamlbuild, ounit, lablgtk):\
-`opam install ocamlfind ounit lablgtk ocamlbuild`
+* Install dependencies (ocamlbuild, ounit, lablgtk, yojson):\
+`opam install ocamlfind ounit lablgtk ocamlbuild yojson`
 * Run \
 `make && ./penguins.native`
 * Enjoy ;) !
