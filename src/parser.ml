@@ -217,12 +217,26 @@ module CreateMap (MI:mapInfo): map = struct
 
   let nb_players = List.length players_pos
 			       
-  let defaul_player = new Player.humanPlayer "" (0,0)
+  let default_player = new Player.humanPlayer "" (0,0)
+
+	
   let players = if nb_players = List.length players_tmp then
-		  Array.make nb_players defaul_player
+		  Array.make nb_players default_player
 		else
 		  failwith "The number of players specified in the \
 			    json file is not the same as which of the map file"
+
+  let num_pl = ref 0
+		   
+  let create_player pl_tmp =
+    let (pl_name,n) = pl_tmp in
+    players.(!num_pl) <- new Player.humanPlayer name (List.nth players_pos n);
+    num_pl := !num_pl + 1
+			
+
+  let () = List.iter create_player players_tmp
+      
+    
   let move pl_name m = ()
   
 end
