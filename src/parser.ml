@@ -1,11 +1,12 @@
 open OUnit2
 open Yojson
 
-(**Module type pour les maps*)
-module type map = sig
-    
-    (**Éléments de la map*)
+(**Éléments de la map*)
     type elt = ICE | WATER | PENGUIN
+
+(**Module type pour les maps*)
+module type map = sig 
+
 
     (**Nom de la map*)
     val name : string
@@ -30,9 +31,7 @@ module type mapInfo = sig
   end
 
 module CreateMap (MI:mapInfo): map = struct
-  
-  type elt = ICE | WATER | PENGUIN
-			     
+  			     
 
 
 (* ********************** Début parsing **************************** *)
@@ -124,20 +123,21 @@ module CreateMap (MI:mapInfo): map = struct
 
     (*ici, on commence par déterminer la longueur de la plus grande ligne*)
     begin 
-      ignore (input_line in_chan); (*on ignore <problem>*)
 
       try 
 	while true do
+	  
 	  let line = input_line in_chan in
-
+	  
 	  if not !first_line_shift_found then 
 	    begin
 	      let fst_not_space = find_not_space line in
 	      if fst_not_space >= 0 then
-		(first_line_shift := ((!nb_lines + fst_not_space) mod 2) = 0;
+		(first_line_shift := ((!nb_lines + fst_not_space) mod 2) = 1;
 		 first_line_shift_found := true);
 	    end;
-
+	  nb_lines := !nb_lines +1 ;
+	  
 	(* ici, on ne met pas else car on doit rentrer dans la condition 
 	 * même si on a mis first_line_shift_found à true juste avant*)
 	if !first_line_shift_found then
@@ -147,54 +147,58 @@ module CreateMap (MI:mapInfo): map = struct
 	       max_length := String.length line);
 	
 	    lines := line::!lines;
-	    nb_lines := !nb_lines + 1	
+	    	
 	  end
       done
     with
       End_of_file -> () 
-  end;
+    end;
 
-  (* nb_lines : on ajoute une ligne d'eau pour rétablir le décalage*)
-  nb_lines := !nb_lines + if !first_line_shift then 1 else 0;
-  max_length_num := !max_length_num +  if !first_line_shift then 1 else 0;
+    (*devrait être +1 ou 0 ... ????*)
+    nb_lines := !nb_lines + if !first_line_shift then 0 else -1;
+    max_length_num := !max_length_num +  if !first_line_shift then 1 else 0;
   
-  
-  (* line_length : si la ligne considérée est décalée (ie son modulo 2 est 0) ,
-   * !max_length est pair et on tombe sur ce qu'on veut 
-   * Sinon, on doit ajouter 1. D'où  !max_length_num mod 2. µ *)
-  let line_length = ((!max_length_num mod 2) + !max_length)/2  in
-  let grid_ret = Array.make_matrix !nb_lines line_length WATER in 
-  let penguins_pos = ref [] in 
-  
-  (* ici nb_lines sera le numéro de la ligne en cours de traitement dans la grille
-   * on va ici écrire la grille à partir de la fin. *)
-  nb_lines := !nb_lines - 1;
-  
-  while !lines <> [] do 
-    let  line::q = !lines in
-    let pos_line = ref (1 - !nb_lines mod 2)  in 
-    let c = ref 0 in (* c est le numéro de la colonne courante
-		      * commence à 1 car eau sur la première colonne*)
-   
-    while !pos_line < String.length line do
-      begin
-	match line.[!pos_line] with
-	|' ' -> ()
-	|'#' -> grid_ret.(!nb_lines).(!c) <- PENGUIN;
-	  penguins_pos := (!nb_lines,!c)::!penguins_pos;
-	|_ -> grid_ret.(!nb_lines).(!c) <- ICE
-      end;      
-      c := !c + 1;
-      pos_line := !pos_line + 2
-				
-    done;
     
-    lines := q;
-    nb_lines := !nb_lines - 1
-  done;
-  (!penguins_pos,grid_ret)
-
-
+    (* line_length : si la ligne considérée est décalée (ie son modulo 2 est 0) ,
+     * !max_length est pair et on tombe sur ce qu'on veut 
+     * Sinon, on doit ajouter 1. D'où  !max_length_num mod 2. µ *)
+    let line_length = ((!max_length_num mod 2) + !max_length)/2  in
+    let grid_ret = Array.make_matrix !nb_lines line_length WATER in 
+    let penguins_pos = ref [] in 
+    
+    (* ici nb_lines sera le numéro de la ligne en cours de traitement dans la 
+     * grille on va ici écrire la grille à partir de la fin. *)
+    nb_lines := !nb_lines - 1;
+    
+    while !lines <> [] do 
+      let  line::q = !lines in
+      let pos_line = ref (1 - !nb_lines mod 2)  in 
+      let c = ref 0 in (* c est le numéro de la colonne courante*)
+      print_string ("line : " ^line);
+      print_int !pos_line;
+      let line_png_pos = ref [] in (*png = penguin*)
+      
+      while !pos_line < String.length line do
+	begin
+	  print_char line.[!pos_line];
+	  match line.[!pos_line] with
+	  |' ' -> ()
+	  |'#' -> grid_ret.(!nb_lines).(!c) <- PENGUIN;
+		  line_png_pos := (!nb_lines,!c)::!line_png_pos
+	  |_ -> grid_ret.(!nb_lines).(!c) <- ICE
+	end;      
+	c := !c + 1;
+	pos_line := !pos_line + 2
+				  
+      done;
+      penguins_pos := (List.rev !line_png_pos) @ !penguins_pos;
+      
+      lines := q;
+      nb_lines := !nb_lines - 1
+    done;
+    (!penguins_pos,grid_ret)
+      
+      
 
 
   				       
@@ -230,7 +234,7 @@ module CreateMap (MI:mapInfo): map = struct
 		   
   let create_player pl_tmp =
     let (pl_name,n) = pl_tmp in
-    players.(!num_pl) <- new Player.humanPlayer name (List.nth players_pos n);
+    players.(!num_pl) <- new Player.humanPlayer pl_name (List.nth players_pos n);
     num_pl := !num_pl + 1
 			
 
@@ -274,7 +278,15 @@ let test_wrong_json2 _ =
   |Failure _ -> ()
 		  
 let test_parser _ =
-  assert_equal TestMap.turn 0
+  assert_equal TestMap.turn 1;
+  assert_equal TestMap.name "Niveau 1";
+  Printf.printf "%d \n" (Array.length TestMap.players);
+  assert_equal (Array.length TestMap.players) 4;
+  assert_equal TestMap.players.(1)#get_name "42";
+  Printf.printf "pos :µ%d %d\n" (fst TestMap.players.(1)#get_pos) (snd TestMap.players.(1)#get_pos);
+  assert_equal TestMap.players.(0)#get_pos (3,0);
+  assert_equal TestMap.map.(1) [|PENGUIN;ICE;ICE;ICE;ICE;ICE;WATER;
+				 WATER; ICE;ICE;ICE;ICE;ICE;PENGUIN|]
 	       
 let tests = ["wrong json">::test_wrong_json;
 	     "wrong json2">::test_wrong_json2;

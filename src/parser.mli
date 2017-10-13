@@ -31,12 +31,13 @@
 
  *)
 
+    
+(**Éléments de la map*)
+type elt = ICE | WATER | PENGUIN
 
 (**Module type pour les maps*)
 module type map = sig
-    
-    (**Éléments de la map*)
-    type elt = ICE | WATER | PENGUIN
+
 
     (**Nom de la map*)
     val name : string

@@ -7,6 +7,6 @@
 	"cotcotcodète" : 3,
 	"winteriscoming" : 1
     },
-    "map" : "test/map_test.txt"
+    "map" : "test/map_test.txt",
     "turn" : 1
 }
