@@ -19,3 +19,10 @@ class virtual player : string -> Hex.pos ->
 	 method get_pos : Hex.pos
 	 method move : Hex.move -> unit
        end
+
+(** This class represents human players *)
+class humanPlayer : string -> Hex.pos ->
+      object
+	inherit player
+	method  play : unit -> Hex.move
+      end

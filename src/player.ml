@@ -10,3 +10,9 @@ class virtual player (a_name:string) (a_pos:Hex.pos) =
 	  method move m = pos <- Hex.move_n pos m
 	end
 
+class humanPlayer (a_name:string) (a_pos:Hex.pos) =
+object (self)
+  inherit player a_name a_pos
+  (*TODO*)
+  method play () = (Hex.E,3)
+end	 

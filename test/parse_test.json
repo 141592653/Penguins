@@ -2,9 +2,10 @@
     "name" : "Niveau 1",
     "players" :
     {
-	"beauGosseDu84" : 1,
-	"42" : 2,
-	"cotcotcodète" : 3
+	"beauGosseDu84" : 2,
+	"42" : 4,
+	"cotcotcodète" : 3,
+	"winteriscoming" : 1
     },
     "map" : "test/map_test.txt"
 }

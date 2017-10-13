@@ -211,10 +211,18 @@ module CreateMap (MI:mapInfo): map = struct
     
   let (name,players_tmp,map_file,turn) = parse_main_json json
   let (players_pos,map) = parse_map map_file
-	
+
+ 	
   (* ********************** Fin parsing **************************** *)
-      
-  let players = [||]
+
+  let nb_players = List.length players_pos
+			       
+  let defaul_player = new Player.humanPlayer "" (0,0)
+  let players = if nb_players = List.length players_tmp then
+		  Array.make nb_players defaul_player
+		else
+		  failwith "The number of players specified in the \
+			    json file is not the same as which of the map file"
   let move pl_name m = ()
   
 end
