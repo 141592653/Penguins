@@ -8,4 +8,5 @@
 	"winteriscoming" : 1
     },
     "map" : "test/map_test.txt"
+    "turn" : 1
 }
