@@ -1,5 +1,6 @@
 PACKAGES=-package lablgtk2 -package oUnit -package yojson
 BUILD=ocamlbuild \
+	-cflags "-w +A"\
 	$(PACKAGES)
 
 .PHONY: default test doc clean mrproper

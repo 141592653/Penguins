@@ -36,7 +36,10 @@
 module type map = sig
     
     (**Éléments de la map*)
-    type elt = ICE | WATER | PLAYER of int
+    type elt = ICE | WATER | PENGUIN
+
+    (**Nom de la map*)
+    val name : string
 					 
     (**Tableau représentant la map*)
     val map : elt array array
