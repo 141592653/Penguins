@@ -51,11 +51,16 @@ let [@warning "-48"] main () =
   (* TODO taille selon taille de la map chargée *)
   da#set_size ~height:400 ~width:400;
 
-  (* let back = GDraw.pixmap ~width:400 ~height:400 () in *)
-  da#misc#realize();                   (* avoid exception Gpointer.Null *)
+  (* TODO gestion d'erreur *)
+  let pixbuf = GdkPixbuf.from_file "img/3uSFN.png" in
 
-  let drawable = new GDraw.drawable da#misc#window in
-
+  let expose ev =
+    da#misc#realize();  (* avoid exception Gpointer.Null *)
+    let draw = new GDraw.drawable da#misc#window in
+    draw#put_pixbuf ~x:0 ~y:0 pixbuf;
+    false
+  in
+  da#event#connect#expose expose;
 
   (* Display the windows and enter Gtk+ main loop *)
   window#add_accel_group accel_group;
