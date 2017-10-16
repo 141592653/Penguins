@@ -58,6 +58,7 @@ let [@warning "-48"] main () =
     da#misc#realize();  (* avoid exception Gpointer.Null *)
     let draw = new GDraw.drawable da#misc#window in
     draw#put_pixbuf ~x:0 ~y:0 pixbuf;
+    draw#put_pixbuf ~x:44 ~y:27 pixbuf;
     false
   in
   da#event#connect#expose expose;
