@@ -32,9 +32,23 @@ let [@warning "-48"] main () =
 
   let load_board () =
     st#pop(); ignore (st#push "Chargement d'un nouveau jeu...");
-    (* TODO boîte de dialogue, choisir un fichier de map *)
-    st#pop(); ignore (st#flash ~delay:3000 "Chargement terminé.")
-  in
+
+    let filew = GWindow.file_chooser_dialog ~action:`OPEN
+                  ~title:"Ouvrir un fichier" ~border_width:0
+                  ~width:320 ~height:240
+                  () in
+    filew#add_filter (GFile.filter ~name:"json" ~patterns:["*.json"] ());
+    filew#add_button_stock `CANCEL `CANCEL;
+    filew#add_select_button_stock `OPEN `OPEN;
+    begin match filew#run(), filew#filename with
+      `OPEN, Some filename ->
+      filew#destroy ();
+      prerr_endline ("ouverture du ficher "^filename);
+      st#pop(); ignore (st#flash ~delay:3000 "Chargement terminé.")
+    | _ -> filew#destroy ();
+           st#pop();
+    end
+ in
 
   (* File menu *)
   let factory = new GMenu.factory file_menu ~accel_group in
