@@ -54,14 +54,15 @@ let [@warning "-48"] main () =
   (* TODO gestion d'erreur *)
   let pixbuf = GdkPixbuf.from_file "img/3uSFN.png" in
 
-  let expose ev =
+  let expose _ =
     da#misc#realize();  (* avoid exception Gpointer.Null *)
     let draw = new GDraw.drawable da#misc#window in
     draw#put_pixbuf ~x:0 ~y:0 pixbuf;
     draw#put_pixbuf ~x:44 ~y:27 pixbuf;
+    draw#put_pixbuf ~x:88 ~y:0 pixbuf;
     false
   in
-  da#event#connect#expose expose;
+  ignore (da#event#connect#expose expose);
 
   (* Display the windows and enter Gtk+ main loop *)
   window#add_accel_group accel_group;
