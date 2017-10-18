@@ -1,3 +1,5 @@
+open OUnit2
+       
 module type ORDERED = sig
     type t
     val compare : t -> t -> int
@@ -159,32 +161,46 @@ module Make (M:ORDERED) = struct
       
 			
 end
+
+
+(* Tests*)
+module T = Make(Int32)
+
+let test_tas _ =
+  let tas = T.create 20 0l "hey" in
+  ignore (T.insert tas 10l "blub2");
+  ignore (T.insert tas 5l "blib");
+  let truc = T.insert tas 8l "BLAB" in
+  ignore (T.insert tas 7l "blub");
+  let truc2 = T.insert tas 5l "blob" in 
+  ignore (T.insert tas 3l "bleb");
+  ignore (T.insert tas 5l "blab");
+  assert_equal true (T.member tas truc);
+  T.remove tas truc;
+  (try
+    T.remove tas truc;
+    assert_equal 0 1 
+  with
+    _ -> ());
+  assert_equal false (T.member tas truc);
+  T.decrease_key tas truc 6l;
+  T.decrease_key tas truc2 4l;
+  assert_equal 3l (T.key (T.extract_min tas));
+  assert_equal "blob" (T.value (T.extract_min tas));
+  assert_equal 5l (T.key (T.extract_min tas));
+  assert_equal 5l (T.key (T.extract_min tas));
+  assert_equal 6l (T.key (T.extract_min tas));
+  assert_equal 7l (T.key (T.extract_min tas));
+  assert_equal 10l (T.key (T.extract_min tas));
+  (try
+    ignore (T.extract_min tas);
+    assert_equal 0 1 
+  with
+    _ -> ())
+	       
+let tests = ["tas">:: test_tas]
 			    
-			    (*		    
-module T = Make(Int32) 
-let tas = T.create 20 0l "hey" ;;
-ignore (T.insert tas 10l "blub2");;
-ignore (T.insert tas 5l "blub");;
-	ignore (T.insert tas 8l "BLAB");;
-	  ignore (T.insert tas 7l "blub");;
-	  let truc = T.insert tas 6l "blub";;
-	      ignore (T.insert tas 3l "blub");;
-		ignore (T.insert tas 5l "blab");;
-		  T.member tas truc;;
-		    tas;;
-		      T.decrease_key tas truc 4l;;
-			T.remove tas truc;;
-			  T.decrease_key tas truc 6l;;
-			    T.remove tas truc;;
-		    tas;;
-		    T.extract_min tas;;
-		      T.extract_min tas;;
-			T.extract_min tas;;
-			  T.extract_min tas;;
-			    T.extract_min tas;;
-		      T.extract_min tas;;
-			T.extract_min tas;;
-			 T.extract_min tas;;*)
+
 		     
 
     

@@ -49,3 +49,7 @@ module Make (M:ORDERED) : sig
   val decrease_key : 'a queue -> 'a node -> M.t -> unit
 
 end
+
+			    
+(**Tests functions *)		
+val tests : OUnit2.test list
