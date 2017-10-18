@@ -1,10 +1,9 @@
 open OUnit2
-open Player
 
        
 let suite =
 "suite">:::
- Parser.tests
+ MapIO.tests
 ;;
 
 let () =
