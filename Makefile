@@ -14,6 +14,7 @@ test:
 doc:
 	$(BUILD) -ocamldoc "ocamldoc -charset utf8" \
 		src/penguins.docdir/index.html
+	rm -rf doc
 	mv _build/src/penguins.docdir doc
 	rm -rf penguins.docdir
 
