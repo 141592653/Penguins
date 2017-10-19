@@ -1,5 +1,5 @@
 open OUnit2
-
+open Paths
        
 let suite =
 "suite">:::
