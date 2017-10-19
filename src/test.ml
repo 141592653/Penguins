@@ -3,7 +3,7 @@ open OUnit2
        
 let suite =
 "suite">:::
- MapIO.tests @ Priority.tests @ Hex.tests
+ MapIO.tests @ Priority.tests @ Hex.tests @ Bitset.tests
 ;;
 
 let () =

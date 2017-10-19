@@ -1,3 +1,5 @@
+open OUnit2
+       
 (** Signature représentant les types finis.
  *
  * Le type [t] est équipé de fonctions [to_int] et [of_int],
@@ -77,7 +79,7 @@ module Make (F : FIN) : SET with type elt = F.t = struct
   (*Ici, on n'utilise pas la fonction add car ce serait plus lent*)
   let init f =
     let new_e = Array.make t_size Int64.zero in
-    for i = 0 to F.max do
+    for i = 0 to F.max - 1 do
       if f (F.of_int i) then
 	(
 	  new_e.(0) <- Int64.succ new_e.(0);
@@ -151,8 +153,33 @@ end
 
 module S = Make(I)
 
-let s = ref (S.empty)
+let add_rm_member_test _ =
+  let s = ref (S.empty) in
+  s := S.add !s (I.of_int 5);
+  assert_equal (S.member  !s (I.of_int 5)) true;
+  assert_equal (S.member  !s (I.of_int 4)) false;
+  s := S.remove !s (I.of_int 5);
+  assert_equal (S.member  !s (I.of_int 5)) false
+  	  
 let pairs = S.init (fun i -> let n = I.to_int i in n mod 2 = 0)
+
+let cardinal_test _ =
+  assert_equal (S.cardinal pairs) 500
+	       
 let pairs2 = S.init (fun i -> let n = I.to_int i in n mod 2 = 0)
 let p = (S.init (fun i -> let n = I.to_int i in n = 10 || n = 0 || n = 33))
-	  
+
+let subset_test _ =
+  assert_equal (S.subset pairs pairs2) true;
+  assert_equal (S.subset pairs2 pairs) true;
+  assert_equal (S.subset p pairs) false
+
+let iter_test _ =
+  let sum_p = ref 0 in
+  S.iter p (fun el -> sum_p := !sum_p + I.to_int el);
+  assert_equal !sum_p 43
+	       
+let tests = ["set : add, rm, member">::add_rm_member_test;
+	     "set : cardinal">::cardinal_test;
+	     "set : subset">::subset_test;
+	     "set : iter">::iter_test]

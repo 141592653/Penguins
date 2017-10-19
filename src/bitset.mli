@@ -56,3 +56,6 @@ end
 
 (** Implémentation de [SET] étant donné un [F:FIN]. *)
 module Make (F : FIN) : SET with type elt = F.t
+
+(**Tests functions *)		
+val tests : OUnit2.test list
