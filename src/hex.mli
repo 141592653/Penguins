@@ -19,15 +19,6 @@ val move_n : pos -> move -> pos
   * obtenues par applications successives des mouvements
   * de [moves] à partir de [p]. *)
 val path_of_moves : pos -> move list -> pos list
-
-(** Entrées/sorties *)
-
-(** Affichage d'une grille de caractères. *)
-val pp_grid : Format.formatter -> char grid -> unit
-val pp_grid_bool : pos * bool grid -> unit
-
-(** Lecture d'une grille sur un in_channel.
-  * La grille produite devra toujours avoir un pourtour
-  * vide, même si cela n'est pas le cas dans le problème
-  * d'entrée. *)
-val from_channel : in_channel -> pos * bool grid
+		    
+(**Tests functions *)		
+val tests : OUnit2.test list

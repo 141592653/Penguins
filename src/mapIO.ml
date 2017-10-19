@@ -145,13 +145,10 @@ let [@warning "-8"] parse_map map_file =
     let  line::q = !lines in
     let pos_line = ref (1 - !nb_lines mod 2)  in 
     let c = ref 0 in (* c est le numéro de la colonne courante*)
-    print_string ("line : " ^line);
-    print_int !pos_line;
     let line_png_pos = ref [] in (*png = penguin*)
     
     while !pos_line < String.length line do
       begin
-	print_char line.[!pos_line];
 	match line.[!pos_line] with
 	|' ' -> ()
 	|'#' -> !map.(!nb_lines).(!c) <- PENGUIN;
