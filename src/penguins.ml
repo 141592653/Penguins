@@ -55,18 +55,18 @@ let [@warning "-48"] main () =
     let m = Array.length map in
     let n = Array.length map.(0) in
 
-    da#set_size ~height:(m*64) ~width:(n*64);
+    da#misc#realize();  (* avoid exception Gpointer.Null *)
+    da#set_size ~height:(32*m) ~width:(92*n);
 
     let expose _ =
-      da#misc#realize();  (* avoid exception Gpointer.Null *)
       let draw = new GDraw.drawable da#misc#window in
-      (* draw#put_pixbuf ~x:0 ~y:0 pixbuf; *)
+      (* draw#put_pixbuf ~x:0 ~y:0 pixbuf_ice; *)
       (* draw#put_pixbuf ~x:44 ~y:27 pixbuf; *)
       (* draw#put_pixbuf ~x:88 ~y:0 pixbuf; *)
-      for i = 0 to n - 1 do
-        for j = 0 to m - 1 do
-          let x = i * 88 + (if j mod 2 = 0 then 0 else 44) in
-          let y = j * 27 in
+      for i = 0 to m - 1 do
+        for j = 0 to n - 1 do
+          let x = j * 90 + (if i mod 2 = 0 then 0 else 45) in
+          let y = i * 26 in
           match map.(i).(j) with
           | ICE ->  draw#put_pixbuf ~x ~y pixbuf_ice;
           | WATER -> ();
