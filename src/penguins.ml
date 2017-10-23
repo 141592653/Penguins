@@ -17,7 +17,8 @@ let st_flash t s = ignore (st#pop(); st#flash ~delay:t s)
 
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
-
+(* This area in an event box to capture mouse events *)
+let evbox = GBin.event_box ()
 
 
 (** handle quit signal, ask to save game if necessary *)
@@ -43,9 +44,9 @@ let [@warning "-48"] main () =
   let file_menu = factory#add_submenu "Fichier" in
 
   (* TODO gestion d'erreur, assert sur les tailles d'image *)
-  let pixbuf_ice = GdkPixbuf.from_file "img/3uSFN.png" in
-  let pixbuf_water = GdkPixbuf.from_file "img/3uSFN.png" in
-  let pixbuf_penguin = GdkPixbuf.from_file "img/3uSFN.png" in
+  let pixbuf_ice = GdkPixbuf.from_file "img/ice.png" in
+  let pixbuf_water = GdkPixbuf.from_file "img/water.png" in
+  let pixbuf_penguin = GdkPixbuf.from_file "img/penguin.png" in
 
   (* draw the board (hexagons etc.) in the drawing area *)
   let draw_board () =
@@ -55,22 +56,27 @@ let [@warning "-48"] main () =
     let m = Array.length map in
     let n = Array.length map.(0) in
 
-    da#misc#realize();  (* avoid exception Gpointer.Null *)
-    da#set_size ~height:(32*m) ~width:(92*n);
+    (* da#misc#realize();  (\* avoid exception Gpointer.Null *\) *)
+    da#set_size ~height:(50*m) ~width:(56*n);
+    (* make it in event_box to handle mouse clicks *)
+    evbox#add da#coerce;
+    evbox#event#add [`BUTTON_PRESS];
+    evbox#event#connect#button_press ~callback:(fun ev ->
+                                       exit 0; true); (* TODO coordonnées*)
 
     let expose _ =
       let draw = new GDraw.drawable da#misc#window in
       (* draw#put_pixbuf ~x:0 ~y:0 pixbuf_ice; *)
-      (* draw#put_pixbuf ~x:44 ~y:27 pixbuf; *)
-      (* draw#put_pixbuf ~x:88 ~y:0 pixbuf; *)
+      (* draw#put_pixbuf ~x:53 ~y:0 pixbuf_water; *)
+      (* draw#put_pixbuf ~x:26 ~y:46 pixbuf_ice; *)
       for i = 0 to m - 1 do
         for j = 0 to n - 1 do
-          let x = j * 90 + (if i mod 2 = 0 then 0 else 45) in
-          let y = i * 26 in
+          (* TODO décalage à unifier avec mapIO *)
+          let x = j * 53 + (if i mod 2 = 0 then 0 else 26) in
+          let y = i * 46 in
           match map.(i).(j) with
           | ICE ->  draw#put_pixbuf ~x ~y pixbuf_ice;
-          | WATER -> ();
-          (* | WATER -> draw#put_pixbuf ~x ~y pixbuf_water; *)
+          | WATER -> draw#put_pixbuf ~x ~y pixbuf_water;
           | PENGUIN -> draw#put_pixbuf ~x ~y pixbuf_penguin;
         done;
       done;
@@ -117,7 +123,7 @@ let [@warning "-48"] main () =
                  ~packing:vbox#add () in
 
   (* pack the drawing area *)
-  scroll#add_with_viewport da#coerce;
+  scroll#add_with_viewport evbox#coerce;
 
   (* add the status bar to the bottom of the main window *)
   vbox#pack status#coerce;
