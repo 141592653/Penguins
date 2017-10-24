@@ -14,11 +14,8 @@ let st_flash t s = ignore (st#pop(); st#flash ~delay:t s)
 
 (* TODO même chose pour un printf dans la console ? *)
 
-
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
-(* This area in an event box to capture mouse events *)
-let evbox = GBin.event_box ()
 
 
 (** handle quit signal, ask to save game if necessary *)
@@ -58,11 +55,48 @@ let [@warning "-48"] main () =
 
     (* da#misc#realize();  (\* avoid exception Gpointer.Null *\) *)
     da#set_size ~height:(50*m) ~width:(56*n);
-    (* make it in event_box to handle mouse clicks *)
-    evbox#add da#coerce;
-    evbox#event#add [`BUTTON_PRESS];
-    evbox#event#connect#button_press ~callback:(fun ev ->
-                                       exit 0; true); (* TODO coordonnées*)
+    (* make it handling mouse clicks *)
+    let button_pressed ev =
+      if GdkEvent.Button.button ev = 1 then (
+        let x = int_of_float (GdkEvent.Button.x ev) in
+        let y = int_of_float (GdkEvent.Button.y ev) in
+
+        let mouse_to_coord_ (x,y) =
+          if (x < 6 || y < 3)
+          then (-1,-1)
+          else
+            let di = (y-3) / (46*2) in
+            let dj = (x-6) / 53 in
+            let i = (y-3) mod (46*2) in
+            let j = (x-6) mod 53 in
+            (* on coupe la figure en deux verticalement *)
+            let b = j < 26 in
+            let jj = if b then j else 53-j in (* symétrie *)
+            if i <= 13 - (jj *13)/26
+            then (if b then     (* Nord-ouest *)
+                    (if di > 0 && dj > 0 then (di*2-1, dj-1) else (-1,-1))
+                  else          (* Nord-est *)
+                    (if di > 0 && dj < n-1 then (di*2-1, dj) else (-1,-1))
+                 )
+            else if i >= 44 + (jj * 13)/26
+            then (if b then     (* Sud-ouest *)
+                    (if di < m-1 && dj > 0 then (di*2+1, dj-1) else (-1,-1))
+                  else          (* Sud-est *)
+                    (if di < m-1 && dj < n-1 then (di*2+1, dj) else (-1,-1))
+                 )
+            else (di*2,dj)
+        in
+        let mouse_to_coord (x,y) =
+          let (i,j) = mouse_to_coord_ (x,y) in
+          if i >= m || j >= n then (-1,-1) else (i,j)
+        in
+        let (i,j) = mouse_to_coord (x,y) in
+        Printf.printf "(%d,%d)\n%!" i j;
+      );
+      true
+    in
+    da#event#add [`BUTTON_PRESS];
+    da#event#connect#button_press ~callback:button_pressed;
 
     let expose _ =
       let draw = new GDraw.drawable da#misc#window in
@@ -123,7 +157,7 @@ let [@warning "-48"] main () =
                  ~packing:vbox#add () in
 
   (* pack the drawing area *)
-  scroll#add_with_viewport evbox#coerce;
+  scroll#add_with_viewport da#coerce;
 
   (* add the status bar to the bottom of the main window *)
   vbox#pack status#coerce;
