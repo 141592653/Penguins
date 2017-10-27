@@ -1,7 +1,7 @@
 
 
 module type S = sig
-  val grid : bool Hex.grid
+  val grid : MapIO.elt Hex.grid
   end
 
 module Make (M : S) : sig
@@ -13,15 +13,8 @@ module Make (M : S) : sig
 
   val grid_set : HSet.t
     
-  val grid_of_set : HSet.t -> (bool Hex.grid)
+  val grid_of_set : HSet.t -> (MapIO.elt Hex.grid)
 
-  (** Affichage d'un chemin sous la forme d'une liste
-      * de positions. Le chemin devra apparaitre, sur la grille
-      * [M.grid] où les cases de glace sont représentées par '*',
-      * selon une numérotation des cases du chemin par
-      *   a ... z A ... Z 0 ... 9 puis ? pour les éventuelles
-      *                                cases suivantes. *)
-  val pp_path : Format.formatter -> Hex.pos list -> unit
 
   (** Liste de tous les mouvements faisables sur la configuration
       * donnée par un ensemble et une position (non présente dans

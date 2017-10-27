@@ -1,7 +1,7 @@
-
+open MapIO
 
 module type S = sig
-    val grid : bool Hex.grid 
+    val grid : MapIO.elt Hex.grid 
 end
 
 module Make (M : S) = struct
@@ -19,57 +19,28 @@ module Make (M : S) = struct
   module HSet : Bitset.SET with type elt = Hex.pos = Bitset.Make(FinPos)
   
   (*TODO enlever () quand ref enlevée*)
-  let grid_set  = HSet.init (fun pos -> M.grid.(fst pos).(snd pos))
+  let grid_set  = HSet.init (fun pos ->
+			     match M.grid.(fst pos).(snd pos) with
+			     |ICE -> true
+			     |_-> false)
 
   let grid_of_set set = 
-    let new_grid = Array.make_matrix (Array.length M.grid) (Array.length M.grid.(0)) false in
+    let new_grid = Array.make_matrix (Array.length M.grid)
+				     (Array.length M.grid.(0))
+				     WATER in
     for i = 0 to Array.length M.grid - 1 do
       for j = 0 to Array.length M.grid.(0) - 1 do 
 	if HSet.member set (i,j) then 
-	  new_grid.(i).(j) <- true
+	  new_grid.(i).(j) <- ICE
       done
+    done;
+    for i = 0 to Array.length (get_players ()) - 1 do
+      new_grid.(fst (MapIO.get_players ()).(i)#get_pos)
+      .(snd (MapIO.get_players ()).(i)#get_pos) <- PENGUIN
     done;
     new_grid
 
-  (*Permet de convertir une grille de booléens en grille de caractères*)
-  let grid_char_of_grid_bool pos g = 
-    let gc = Array.make_matrix (Array.length g) (Array.length g.(0)) ' ' in
-    for l = 0 to Array.length g - 1 do
-      for c = 0 to Array.length g.(0) - 1 do
-	if (l,c) = pos then
-	  gc.(l).(c) <- '#'
-	else if g.(l).(c) then 
-	  gc.(l).(c) <- 'x'
-	else
-	  gc.(l).(c) <- ' '
-      done
-    done;
-    gc
-
-  (*Donne le charactère en fonction de l'indice de la position dans le chemin*)
-  let path_char i =
-    if i < 26 then
-      char_of_int (97 + i)
-    else if i < 52 then
-      char_of_int (65 + i-26)
-    else if i < 62 then
-      char_of_int (48 + i - 52)
-    else
-      '?'
-      
-      
-  let pp_path f path =    
-    let gc = grid_char_of_grid_bool (-1,-1)(*M.tux_pos*) M.grid in
-    let rec pp_path_tmp l i = match l with
-      |[] -> ()
-      |pos::q -> (*Printf.printf "(%d,%d)" (fst pos) (snd pos);*)
-	gc.(fst pos).(snd pos) <- path_char i;
-	pp_path_tmp q (i+1)
-    in
-    pp_path_tmp path 0;
-    Hex.pp_grid f gc
-    
-
+ 
   
   let all_moves set elt =
     let moves  = ref [] in 
@@ -246,9 +217,6 @@ module Make (M : S) = struct
 		find_cc q elt
 
 		
-  let pp_conf conf =
-    let (set,elt) = conf in
-    Hex.pp_grid_bool (elt,grid_of_set set)
 
   let maxpath init_elt =
     (*initialisation*)
@@ -369,8 +337,7 @@ module Make (M : S) = struct
 	   
 	  end
 	  
-      |_-> assert false (* XXX je préfère vérifier le commentaire ci-dessus "normalement dans la table" *)
-    (*failwith "Une configuration dans la file de priorité n'a pas été insérée dans la table"*)
+      |_-> failwith "Une configuration dans la file de priorité n'a pas été insérée dans la table"
 
     in
 
