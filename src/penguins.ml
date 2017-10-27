@@ -1,5 +1,6 @@
 open GMain
 open GdkKeysyms
+open MapIO
 
 (* warning 32 here *)
 let locale = GtkMain.Main.init ()
@@ -136,10 +137,10 @@ let [@warning "-48"] main () =
       (try
         MapIO.open_map filename;
         window#set_title (MapIO.get_name());
+
         draw_board();
         st_flash 3000 "Chargement terminé.";
-       with _ -> st_flash 3000 "Erreur de chargement :"
-      (* TODO plus précis *)
+       with Failure s -> st_flash 5000 ("Erreur de chargement : "^s)
       )
     | _ -> filew#destroy ();
            st#pop();
