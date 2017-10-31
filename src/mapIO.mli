@@ -1,6 +1,6 @@
 (**Parser des fichiers de sauvegarde. Format des maps : 
  * 
- * {
+ * [{
  *     "name" : "Niveau 1",
  *     "players" :
  *     {
@@ -10,7 +10,7 @@
  *      },
  *     "map" : "map_test.txt"
  *     "turn" : 2
- * }
+ * }]
 
  * Tous les paramètres sont optionnels mais players sera par défaut la liste 
  * vide. Il faut que le nombre de joueur de la liste corresponde au nombre de

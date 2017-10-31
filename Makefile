@@ -1,5 +1,5 @@
 PACKAGES=-package lablgtk2 -package oUnit -package yojson
-BUILD=ocamlbuild \
+BUILD=ocamlbuild -use-ocamlfind \
 	-cflags "-w +A"\
 	$(PACKAGES)
 
@@ -12,7 +12,7 @@ test:
 	./test.native
 
 doc:
-	$(BUILD) -ocamldoc "ocamldoc -charset utf8" \
+	$(BUILD) -ocamldoc "ocamldoc -charset utf8 -stars" \
 		src/penguins.docdir/index.html
 	rm -rf doc
 	mv _build/src/penguins.docdir doc

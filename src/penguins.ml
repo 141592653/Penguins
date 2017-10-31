@@ -1,5 +1,6 @@
 open GMain
 open GdkKeysyms
+open MapIO
 
 (* warning 32 here *)
 let locale = GtkMain.Main.init ()
@@ -72,19 +73,16 @@ let [@warning "-48"] main () =
             (* on coupe la figure en deux verticalement *)
             let b = j < 26 in
             let jj = if b then j else 53-j in (* symétrie *)
-            if i <= 13 - (jj *13)/26
-            then (if b then     (* Nord-ouest *)
-                    (if di > 0 && dj > 0 then (di*2-1, dj-1) else (-1,-1))
-                  else          (* Nord-est *)
-                    (if di > 0 && dj < n-1 then (di*2-1, dj) else (-1,-1))
-                 )
-            else if i >= 44 + (jj * 13)/26
-            then (if b then     (* Sud-ouest *)
-                    (if di < m-1 && dj > 0 then (di*2+1, dj-1) else (-1,-1))
-                  else          (* Sud-est *)
-                    (if di < m-1 && dj < n-1 then (di*2+1, dj) else (-1,-1))
-                 )
-            else (di*2,dj)
+            if i <= (jj *13)/26
+            then                (* Nord *)
+              (if di > 0 then (di*2-1, dj) else (-1,-1))
+            else if i >= 54 - (jj * 13)/26
+            then                (* Sud *)
+              (if di < m-1 then (di*2+1, dj) else (-1,-1))
+            else (if b then     (* Ouest *)
+                    (if dj > 0 then (di*2, dj-1) else (-1,-1))
+                  else          (* Ici *)
+                    (di*2,dj))
         in
         let mouse_to_coord (x,y) =
           let (i,j) = mouse_to_coord_ (x,y) in
@@ -105,8 +103,7 @@ let [@warning "-48"] main () =
       (* draw#put_pixbuf ~x:26 ~y:46 pixbuf_ice; *)
       for i = 0 to m - 1 do
         for j = 0 to n - 1 do
-          (* TODO décalage à unifier avec mapIO *)
-          let x = j * 53 + (if i mod 2 = 0 then 0 else 26) in
+          let x = j * 53 + (if i mod 2 = 1 then 0 else 26) in
           let y = i * 46 in
           match map.(i).(j) with
           | ICE ->  draw#put_pixbuf ~x ~y pixbuf_ice;
@@ -136,10 +133,10 @@ let [@warning "-48"] main () =
       (try
         MapIO.open_map filename;
         window#set_title (MapIO.get_name());
+
         draw_board();
         st_flash 3000 "Chargement terminé.";
-       with _ -> st_flash 3000 "Erreur de chargement :"
-      (* TODO plus précis *)
+       with Failure s -> st_flash 5000 ("Erreur de chargement : "^s)
       )
     | _ -> filew#destroy ();
            st#pop();
