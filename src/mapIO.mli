@@ -37,7 +37,6 @@ type elt = ICE | WATER | PENGUIN
 
 
 
-
 (**Nom de la map*)
 val get_name : unit -> string
 					 

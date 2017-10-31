@@ -10,8 +10,11 @@ class virtual player (a_name:string) (a_pos:Hex.pos) =
 	  method get_name = name
 	  method get_pos = pos
 	  method is_ready = is_ready
-	  method set_ready a_is_ready = is_ready <- a_is_ready 
-	  method move m = pos <- Hex.move_n pos m
+	  method set_ready a_is_ready = is_ready <- a_is_ready
+						      
+	  method move m =
+	    pos <- Hex.move_n pos m;
+	    is_ready <- false
 	end
 
 class humanPlayer (a_name:string) (a_pos:Hex.pos) =
