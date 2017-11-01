@@ -18,10 +18,9 @@ module Make (M : S) = struct
 
   module HSet : Bitset.SET with type elt = Hex.pos = Bitset.Make(FinPos)
   
-  (*TODO enlever () quand ref enlevée*)
   let grid_set  = HSet.init (fun pos ->
 			     match M.grid.(fst pos).(snd pos) with
-			     |ICE -> true
+			     |ICE _ -> true
 			     |_-> false)
 
   let grid_of_set set = 
@@ -31,7 +30,7 @@ module Make (M : S) = struct
     for i = 0 to Array.length M.grid - 1 do
       for j = 0 to Array.length M.grid.(0) - 1 do 
 	if HSet.member set (i,j) then 
-	  new_grid.(i).(j) <- ICE
+	  new_grid.(i).(j) <- ICE 1
       done
     done;
     for i = 0 to Array.length (get_players ()) - 1 do
@@ -248,7 +247,8 @@ module Make (M : S) = struct
     let rec lift_tag conf =
       match HMap.find_conf conf with
       |Some(tag_nb,(pre_path_size,pre_conf),post_path) ->
-	if fst post_path = 1 && pre_path_size > 0 then (*alors c'est une feuille et ce n'est pas la racine*)
+	if fst post_path = 1 && pre_path_size > 0 then
+	  (*alors c'est une feuille et ce n'est pas la racine*)
 	  lift_tag pre_conf
 	else
 	  begin

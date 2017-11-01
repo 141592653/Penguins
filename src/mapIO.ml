@@ -2,7 +2,7 @@ open OUnit2
 open Yojson
 
 (**Éléments de la map*)
-type elt = ICE | WATER | PENGUIN
+type elt = ICE of int| WATER | PENGUIN
 
 let name = ref ""
 let map = ref [|[||]|]
@@ -13,6 +13,9 @@ let get_map () = !map
 let get_players () = !players
 let get_turn () = !turn
 
+
+
+		   
 
 (* ********************** Début parsing **************************** *)
 let parse_player p =
@@ -62,15 +65,13 @@ let parse_main_json json_a =
 
 
 
-
-
 (* Renvoie la position du premier caractère différent de ' '
  * s'il existe et -1 sinon *) 
 let find_not_space s =
   let i = ref 0 and n = String.length s in 
   while !i<n && s.[!i] == ' ' do 
     i := !i + 1
-  done;
+    done;
   if !i < n then
     !i
   else
@@ -153,7 +154,11 @@ let [@warning "-8"] parse_map map_file =
 	|' ' -> ()
 	|'#' -> !map.(!nb_lines).(!c) <- PENGUIN;
 		line_png_pos := (!nb_lines,!c)::!line_png_pos
-	|_ -> !map.(!nb_lines).(!c) <- ICE
+	|ice -> let n = int_of_char ice in
+	      if n >= 48 && n <= 57 then
+		!map.(!nb_lines).(!c) <- ICE (n-48)
+	      else
+		!map.(!nb_lines).(!c) <- ICE 1
       end;      
       c := !c + 1;
       pos_line := !pos_line + 2
@@ -203,18 +208,62 @@ let open_map s =
     num_pl := !num_pl + 1 in 
 			
   List.iter create_player players_tmp
-		   
 
-		    				  
+	    
 (* ********************** Fin parsing **************************** *)
 
+
+(* ******************** Pretty printing ************************* *)
+	    
+(*Permet de convertir une grille de booléens en grille de caractères*)
+let char_grid_of_elt_grid pos g = 
+  let gc = Array.make_matrix (Array.length g) (Array.length g.(0)) ' ' in
+  for l = 0 to Array.length g - 1 do
+    for c = 0 to Array.length g.(0) - 1 do
+      if (l,c) = pos then
+	gc.(l).(c) <- '#'
+      else if g.(l).(c) then 
+	gc.(l).(c) <- 'x'
+      else
+	gc.(l).(c) <- ' '
+    done
+  done;
+  gc
+
+(*Donne le charactère en fonction de l'indice de la position dans le chemin*)
+(*let path_char i =
+  if i < 26 then
+    char_of_int (97 + i)
+  else if i < 52 then
+    char_of_int (65 + i-26)
+  else if i < 62 then
+    char_of_int (48 + i - 52)
+  else
+    '?'
+      
+      
+let pp_path f path =    
+  let gc = grid_char_of_grid_bool (-1,-1)(*M.tux_pos*) M.grid in
+  let rec pp_path_tmp l i = match l with
+    |[] -> ()
+    |pos::q -> (*Printf.printf "(%d,%d)" (fst pos) (snd pos);*)
+      gc.(fst pos).(snd pos) <- path_char i;
+      pp_path_tmp q (i+1)
+  in
+  pp_path_tmp path 0;
+  Hex.pp_grid f gc*)
+
+
+
+
+	    
 let move pl_name m = ()
 	
 
 
 
 
-(* Test functions*)
+(* ********************** Test functions ************************* *)
 
 let test_wrong_json _ = 
   try
@@ -237,8 +286,8 @@ let test_parser _ =
   assert_equal (Array.length !players) 4;
   assert_equal !players.(1)#get_name "42";
   assert_equal !players.(0)#get_pos (3,0);
-  assert_equal !map.(1) [|PENGUIN;ICE;ICE;ICE;ICE;ICE;WATER;
-				 WATER; ICE;ICE;ICE;ICE;ICE;PENGUIN|]
+  assert_equal !map.(1) [|PENGUIN;ICE 1;ICE 1;ICE 1;ICE 1;ICE 1;WATER;
+				 WATER; ICE 1;ICE 1;ICE 1;ICE 1;ICE 1;PENGUIN|]
 			       
 let tests = ["wrong json">::test_wrong_json;
 	     "wrong json2">::test_wrong_json2;

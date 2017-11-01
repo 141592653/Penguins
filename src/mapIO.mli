@@ -33,7 +33,7 @@
 
     
 (**Éléments de la map*)
-type elt = ICE | WATER | PENGUIN
+type elt = ICE of int | WATER | PENGUIN
 
 
 
@@ -54,6 +54,18 @@ val move : string -> Hex.move -> unit
 
 (**Open a new map*)
 val open_map: string -> unit
+
+(**Text-based pretty printer of a map*)
+(*l pp_map :Format.formatter -> unit
+
+(** Affichage d'un chemin sous la forme d'une liste
+ * de positions. Le chemin devra apparaitre, sur la grille
+ * [M.grid] où les cases de glace sont représentées par '*',
+ * selon une numérotation des cases du chemin par
+ * a ... z A ... Z 0 ... 9 puis ? pour les éventuelles
+ * cases suivantes. *)
+val pp_path : Format.formatter -> Hex.pos list -> unit*)
+			  
 		    
 (**Tests functions *)		
 val tests : OUnit2.test list
