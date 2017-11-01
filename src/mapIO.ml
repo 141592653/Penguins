@@ -212,6 +212,8 @@ let open_map s =
 	    
 (* ********************** Fin parsing **************************** *)
 
+	    
+
 
 (* ******************** Pretty printing ************************* *)
 	    
@@ -256,11 +258,51 @@ let pp_path f path =
   pp_path_tmp path 0;
   Hex.pp_grid f gc
 
+(* *********************** Fin pretty_printing ******************** *)
 
 
+let legal_move_n p m =
+  let (d,n) = m in
+  let p' = ref p in
+  let legal = ref true in 
+  for i = 1 to n do
+    p' := Hex.move !p' d;
+    (*ici si on dépasse du tableau , l'accès lèvera une exception.*)
+    try
+      match !map.(fst !p').(snd !p') with
+      |ICE _ -> ()
+      |_ -> legal := false
+    with
+    |_ -> legal := false
+  done;
+  (!legal,!p')
 
-	    
-let move pl_name m = ()
+
+let player_num_from_name pl_name =
+  let found = ref false and i = ref 0  in
+  while not !found && !i < Array.length !players do
+    if !players.(!i)#get_name = pl_name then
+      found := true
+    else
+      i := !i + 1
+  done;
+  if !i =  Array.length !players then
+    raise (Invalid_argument (pl_name ^ " n'est pas un nom de joueur"))
+  else
+    !i
+	   
+let move pl_name m =
+  let n = player_num_from_name pl_name  in
+  let old_p = !players.(n)#get_pos in 
+  let (legal,new_p) = legal_move_n old_p m in
+  if not legal then
+    raise (Invalid_argument "Le mouvement n'est pas valide.")
+  else
+    (!players.(n)#set_pos new_p;
+     !map.(fst old_p).(snd old_p) <- WATER;
+     !map.(fst new_p).(snd new_p) <- PENGUIN
+    )
+	      
 	
 
 

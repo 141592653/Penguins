@@ -34,6 +34,9 @@ class virtual player : string -> Hex.pos ->
 	 (** Is_ready setter*)
 	 method set_ready : bool -> unit
 
+	 (**Position setter*)
+	 method set_pos : Hex.pos -> unit
+
 	 (** Moves the player*)
 	 method move : Hex.move -> unit
        end

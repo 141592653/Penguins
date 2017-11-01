@@ -12,6 +12,10 @@ class virtual player (a_name:string) (a_pos:Hex.pos) =
 	  method is_ready = is_ready
 	  method set_ready a_is_ready = is_ready <- a_is_ready
 						      
+	  method set_pos a_pos =
+	    pos <- a_pos;
+	    is_ready <- false
+		     
 	  method move m =
 	    pos <- Hex.move_n pos m;
 	    is_ready <- false
