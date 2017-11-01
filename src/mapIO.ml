@@ -216,34 +216,37 @@ let open_map s =
 (* ******************** Pretty printing ************************* *)
 	    
 (*Permet de convertir une grille de booléens en grille de caractères*)
-let char_grid_of_elt_grid pos g = 
-  let gc = Array.make_matrix (Array.length g) (Array.length g.(0)) ' ' in
-  for l = 0 to Array.length g - 1 do
-    for c = 0 to Array.length g.(0) - 1 do
-      if (l,c) = pos then
-	gc.(l).(c) <- '#'
-      else if g.(l).(c) then 
-	gc.(l).(c) <- 'x'
-      else
-	gc.(l).(c) <- ' '
+let char_grid_of_map () = 
+  let gc = Array.make_matrix (Array.length !map) (Array.length !map.(0)) ' ' in
+  for l = 0 to Array.length !map - 1 do
+    for c = 0 to Array.length !map.(0) - 1 do
+      match !map.(l).(c) with
+      |ICE n ->	gc.(l).(c) <- char_of_int (48 + n)
+      |_ -> ()
+	      
     done
+  done;
+  for i = 0 to Array.length !players - 1 do
+    let (l,c) = !players.(i)#get_pos in
+    gc.(l).(c) <- '#'
   done;
   gc
 
+let pp_map f =
+  Hex.pp_grid f (char_grid_of_map ())
+
 (*Donne le charactère en fonction de l'indice de la position dans le chemin*)
-(*let path_char i =
+let path_char i =
   if i < 26 then
     char_of_int (97 + i)
   else if i < 52 then
     char_of_int (65 + i-26)
-  else if i < 62 then
-    char_of_int (48 + i - 52)
   else
     '?'
       
-      
+     
 let pp_path f path =    
-  let gc = grid_char_of_grid_bool (-1,-1)(*M.tux_pos*) M.grid in
+  let gc = char_grid_of_map () in
   let rec pp_path_tmp l i = match l with
     |[] -> ()
     |pos::q -> (*Printf.printf "(%d,%d)" (fst pos) (snd pos);*)
@@ -251,7 +254,7 @@ let pp_path f path =
       pp_path_tmp q (i+1)
   in
   pp_path_tmp path 0;
-  Hex.pp_grid f gc*)
+  Hex.pp_grid f gc
 
 
 

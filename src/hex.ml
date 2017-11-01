@@ -41,7 +41,44 @@ let rec path_of_moves p ml = match ml with
   | [] -> []
   | m :: q ->  let p' = move_n p m in 
 	       p'::path_of_moves p' q
+				 
 
+let pp_grid f g = 
+  if not (Array.length g = 0) then 
+    begin
+      Format.fprintf f "@[<v 0>";
+
+      (*ligne du haut*)
+      for _ = 1 to 2*Array.length g.(0) + 2 do
+	Format.fprintf f "_";
+      done;
+      Format.fprintf f "@,";
+
+      (*corps*)
+      for i = 0 to Array.length g - 1 do 
+	Format.fprintf f "|";
+	if i mod 2 = 0 then 
+	  Format.fprintf f " ";
+	for j = 0 to Array.length g.(i)-2 do 
+	  Format.fprintf f "%c " g.(i).(j)
+	done;
+
+	(* dernier caractère de la ligne 
+	 * (pour ne pas afficher d'espace supplémentaire) *)
+	Format.fprintf f "%c" g.(i).(Array.length g.(i)-1);
+	if i mod 2 = 1 then 
+	  Format.fprintf f " ";
+	Format.fprintf f "|@," 
+      done;
+
+      (*ligne du bas*)
+      for _ = 1 to 2*Array.length g.(0) + 2 do(*int_of_float ((2.*.float_of_int (Array.length g.(0)) +. 2.)*. (16.9/.13.)) do*)
+	Format.fprintf f "‾";
+      done; 
+      
+      Format.fprintf f "@,@]"
+    end
+      
 (*Q : Doit-on mettre la première position?*)
 let path_of_moves_test _  =
   assert_equal (path_of_moves (3,2)

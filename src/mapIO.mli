@@ -56,7 +56,7 @@ val move : string -> Hex.move -> unit
 val open_map: string -> unit
 
 (**Text-based pretty printer of a map*)
-(*l pp_map :Format.formatter -> unit
+val pp_map :Format.formatter -> unit
 
 (** Affichage d'un chemin sous la forme d'une liste
  * de positions. Le chemin devra apparaitre, sur la grille
@@ -64,7 +64,7 @@ val open_map: string -> unit
  * selon une numérotation des cases du chemin par
  * a ... z A ... Z 0 ... 9 puis ? pour les éventuelles
  * cases suivantes. *)
-val pp_path : Format.formatter -> Hex.pos list -> unit*)
+val pp_path : Format.formatter -> Hex.pos list -> unit
 			  
 		    
 (**Tests functions *)		
