@@ -32,8 +32,12 @@ module Make (M : S) : sig
   val disconnected : HSet.t -> HSet.elt -> bool
 
   (** Si [set] a été déconnecté par la suppression de [elt],
-      * renvoie la liste des nouvelles composantes connexes. *)
+   * renvoie la liste des nouvelles composantes connexes. *)
   val split : HSet.t -> Hex.pos -> HSet.t list
+
+  (**Identique à split mais ne renvoie que les ccs qui 
+   * appartiennent au pingouin considéré*)
+  val split_own : HSet.t -> Hex.pos -> HSet.t list
 
   (** Calcul de la solution optimale à partir d'une position
       * donnée. L'entier est simplement la longueur de la liste
@@ -41,3 +45,6 @@ module Make (M : S) : sig
   val maxpath : Hex.pos -> int * Hex.pos list
 
 end
+
+(**Tests functions *)		
+val tests : OUnit2.test list

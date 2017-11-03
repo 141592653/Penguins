@@ -1,9 +1,8 @@
 open OUnit2
-open Paths
        
 let suite =
 "suite">:::
- MapIO.tests @ Priority.tests @ Hex.tests @ Bitset.tests
+ MapIO.tests @ Priority.tests @ Hex.tests @ Bitset.tests @ Paths.tests
 ;;
 
 let () =

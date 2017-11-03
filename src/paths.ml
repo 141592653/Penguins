@@ -1,4 +1,5 @@
 open MapIO
+open OUnit2
 
 module type S = sig
     val grid : MapIO.elt Hex.grid 
@@ -53,42 +54,22 @@ module Make (M : S) = struct
     !moves
 
 
-  let all_dirs set elt = 
-    let rec elim_ice l = match l with 
-      |[] -> []
-      |dir::q -> 
-	begin
-	  match HSet.member set (Hex.move elt dir) with 
-	  |true -> dir :: elim_ice q
-	  |false -> elim_ice q
-	end
-    in
-    elim_ice Hex.all_directions
 
   (** XXX amélioration possible: tail rec *)	     
-  let rec accessible set elt = 
-    let cc = ref HSet.empty in (*cc pour composante connexe*)
-    cc := HSet.add !cc elt;
-    let rec explore el dirs = match dirs with 
-      |[] -> ()
+  let  accessible set elt = 
+    let rec explore el dirs cc = match dirs with 
+      |[] -> cc
       |dir::q -> 
-	begin
-	  let next_el = Hex.move el dir in
-	  match HSet.member set next_el with 
-	  |true ->
-	    begin
-	      
-	      if not (HSet.member !cc next_el) then
-		(cc :=  HSet.add !cc next_el;
-		 explore next_el Hex.all_directions)
-	    end;
-	    explore el q
-			     
-	  |false -> explore el q
-	end
+	let next_el =  Hex.move el dir in
+	if HSet.member set next_el && not (HSet.member cc next_el) then
+	  explore el q (explore
+			  next_el
+			  Hex.all_directions
+			  (HSet.add cc next_el))
+	else
+	  explore el q cc
     in
-    explore elt Hex.all_directions;
-    !cc
+    explore elt Hex.all_directions (HSet.add HSet.empty elt)
 
   let neighbours set elt =
     let nb = Array.make 6 (-1,-1) in
@@ -164,9 +145,12 @@ module Make (M : S) = struct
 
   module HMap = struct 
     let table = Hashtbl.create 100
-    (*à chaque configuration, on associe un nombre de marquage, un pré-chemin et un post-chemin et leur longueur respective (tout ça dans status)*)
-                  (* XXX pour "formaliser" ce commentaire tu aurais pu
-                   * déclarer un type *)
+    (*à chaque configuration, on associe un nombre de marquage, 
+     * un pré-chemin et un post-chemin et leur longueur respective 
+     * (tout ça dans status)*)
+			       
+    (* XXX pour "formaliser" ce commentaire tu aurais pu
+     * déclarer un type *)
 
     let rm_conf conf =
       Hashtbl.remove table conf
@@ -203,7 +187,7 @@ module Make (M : S) = struct
  end
   module KeysSum : Priority.ORDERED with type t = bool*int*int = struct 
     type t = bool*int*int
-    let compare (b1,x1,x2) (b2,y1,y2) =
+    let compare (_,x1,x2) (_,y1,y2) =
       let sum1 = 2*x1 + x2 and sum2 = 2*y1 +y2 in
       if sum1 > sum2 then 
 	-1
@@ -215,7 +199,7 @@ module Make (M : S) = struct
 
  module NoKeys : Priority.ORDERED with type t = bool*int*int= struct 
     type t =  bool*int*int
-    let compare x y =
+    let compare _ _ =
        0
   end
 						       
@@ -224,9 +208,11 @@ module Make (M : S) = struct
 
 			      
 
-  (* permet de trouver la composante connexe à laquelle appartient elt dans un tableau de composantes connexes ccs
-   * Attention ! ccs doit être non vide et au moins une composante doit contenir elt
-*)
+  (* permet de trouver la composante connexe à laquelle
+   * appartient elt dans un tableau de composantes connexes ccs
+   * Attention ! ccs doit être non vide et au moins une composante
+   * doit contenir elt
+   *)
   let rec find_cc ccs elt  =
     match ccs with
     |[] -> failwith "Aucune composante connexe n'a été trouvée"
@@ -241,7 +227,9 @@ module Make (M : S) = struct
     (*initialisation*)
     (* XXX c'est rude avec aussi peu de doc.. *)
     let prior = Prior.create !priority_size (false,0,0) (HSet.empty,init_elt) in
-    ignore (Prior.insert prior (false,0,HSet.cardinal grid_set) (grid_set,init_elt));
+    ignore (Prior.insert prior
+			 (false,0,HSet.cardinal grid_set)
+			 (grid_set,init_elt));
     HMap.add_conf (grid_set,init_elt) (-1,(0,(grid_set,init_elt)),(-1,[]));
     let max_path = ref (-1) in
     let root_tagged = ref false in
@@ -250,7 +238,7 @@ module Make (M : S) = struct
     (*si on est sur une feuille*)
     let rec lift_post_path conf (post_path_size,post_path) =
       match HMap.find_conf conf with
-      |Some(tag_nb,(pre_path_size,pre_conf),(old_path_size,old_path)) ->
+      |Some(tag_nb,(pre_path_size,pre_conf),(old_path_size,_)) ->
 	if post_path_size > old_path_size then (
 	  HMap.add_conf conf (tag_nb,(pre_path_size,pre_conf),
 			      (post_path_size,post_path));
@@ -287,7 +275,8 @@ module Make (M : S) = struct
     in 
 
 
-    (*parcours des fils d'un noeud, new_path_size vaut la taille de pre_path + 1*)
+    (* parcours des fils d'un noeud,
+     * new_path_size vaut la taille de pre_path + 1 *)
     let rec browse_moves mov_l pre_conf ccs pre_path new_path_size =
       
       let add_pre_tag = ref 0 in
@@ -312,7 +301,8 @@ module Make (M : S) = struct
 			(disconnected next_set next_elt,
 			 new_path_size,HSet.cardinal next_set)
 			next_conf)
-	    |Some(nb_tag,(old_path_size,old_pre_conf),(post_path_size,post_path)) ->
+	    |Some(nb_tag,(old_path_size,old_pre_conf),
+		  (post_path_size,post_path)) ->
 	      if new_path_size > old_path_size && (nb_tag>0 || nb_tag= -1) then
 		begin
 		  add_pre_tag := 1;
@@ -339,7 +329,7 @@ module Make (M : S) = struct
       match HMap.find_conf conf with
       (*si la configuration est dans la file normalement elle est dans la table
        de plus, elle ne doit pas être marquée*)
-      |Some(tag_nb,(pre_path_size,pre_conf),(post_path_size,post_path))
+      |Some(tag_nb,(pre_path_size,pre_conf),_)
 	   when tag_nb <> 0 ->
         
 	let moves = all_moves set elt in
@@ -369,7 +359,8 @@ module Make (M : S) = struct
 	   
 	  end
 	  
-      |_-> failwith "Une configuration dans la file de priorité n'a pas été insérée dans la table"
+      |_-> failwith "Une configuration dans la file de priorité 
+		     n'a pas été insérée dans la table"
 
     in
 
@@ -394,3 +385,22 @@ module Make (M : S) = struct
      
     
 end
+
+let accessible_test _ =
+  MapIO.open_map "test/accessible_test.json";
+  let module Grid : S= struct
+    let grid = MapIO.get_map ()
+			   
+  end
+  in
+  let module Path = Make (Grid) in
+  let acc = Path.grid_of_set (Path.accessible Path.grid_set (1,5)) in
+  assert_equal acc.(1).(5) PENGUIN;
+  assert_equal acc.(1).(4) (ICE 1);
+  assert_equal acc.(1).(3) (ICE 1);
+  assert_equal acc.(2).(1) WATER;
+  MapIO.pp_grid Format.std_formatter acc
+
+
+let tests = ["accessible">:: accessible_test]
+		 

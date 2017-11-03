@@ -57,6 +57,9 @@ val open_map: string -> unit
 (**Text-based pretty printer of a map*)
 val pp_map :Format.formatter -> unit
 
+(**Text-based pretty printer of a map*)
+val pp_grid :Format.formatter -> elt array array -> unit
+				  
 (** Affichage d'un chemin sous la forme d'une liste
  * de positions. Le chemin devra apparaitre, sur la grille
  * [M.grid] où les cases de glace sont représentées par '*',

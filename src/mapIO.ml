@@ -237,6 +237,18 @@ let char_grid_of_map () =
 let pp_map f =
   Hex.pp_grid f (char_grid_of_map ())
 
+let pp_grid f g =
+  let gc = Array.make_matrix (Array.length !map) (Array.length !map.(0)) ' ' in
+  for l = 0 to Array.length g - 1 do
+    for c = 0 to Array.length g.(0) - 1 do
+      match g.(l).(c) with
+      |ICE n ->	gc.(l).(c) <- char_of_int (48 + n)
+      |_ -> ()
+	      
+    done
+  done;
+  Hex.pp_grid f gc
+
 (*Donne le charactère en fonction de l'indice de la position dans le chemin*)
 let path_char i =
   if i < 26 then
