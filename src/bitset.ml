@@ -94,12 +94,17 @@ module Make (F : FIN) : SET with type elt = F.t = struct
   let add e el =
     let int_el = F.to_int el in 
     let new_e = Array.copy e in 
-    let pos_el = get_pos int_el in 
-    new_e.(pos_el) <- Int64.logor (mask int_el) e.(pos_el);
-    (*Si les entiers sont différents, c'est que l'élément ne se trouvait pas dans l'ensemble *)
-    if Int64.compare new_e.(pos_el) e.(pos_el) <> 0 then
-      new_e.(0) <- Int64.succ new_e.(0);
-    new_e
+    let pos_el = get_pos int_el in
+    try 
+      new_e.(pos_el) <- Int64.logor (mask int_el) e.(pos_el);
+      (* Si les entiers sont différents, c'est que l'élément ne se trouvait pas 
+       * dans l'ensemble *)
+      if Int64.compare new_e.(pos_el) e.(pos_el) <> 0 then
+	new_e.(0) <- Int64.succ new_e.(0);
+      new_e
+    with
+    |Invalid_argument _ -> new_e
+    |_ -> failwith "not a clue" 
 
       
 
@@ -116,8 +121,13 @@ module Make (F : FIN) : SET with type elt = F.t = struct
 
 
   let member e el =
-    let int_el = F.to_int el in 
-    Int64.compare (Int64.logand (mask int_el) e.(get_pos int_el)) Int64.zero <> 0
+    let int_el = F.to_int el in
+    try
+      Int64.compare (Int64.logand (mask int_el) e.(get_pos int_el)) Int64.zero <> 0
+    with
+    |Invalid_argument _ -> false
+    |_ -> failwith "not a clue"
+    
 
   (*pour que e1 soit un sous-ensemble de e2, si un élément appartient à e1, alors il appartient à e2. On peut donc utiliser l'implication logique et on ne doit alors obtenir que des 1. On veut donc que la négation de e1 => e2 soit 0. Par conséquent, on peut utiliser la formule e1/\~e2 et vérifier que le résultat est nul*)
   let subset e1 e2 =

@@ -37,7 +37,7 @@ module Make (M : S) : sig
 
   (**Identique à split mais ne renvoie que les ccs qui 
    * appartiennent au pingouin considéré*)
-  val split_own : HSet.t -> Hex.pos -> HSet.t list
+  val split_exclusive : HSet.t -> Hex.pos -> HSet.t list
 
   (** Calcul de la solution optimale à partir d'une position
       * donnée. L'entier est simplement la longueur de la liste

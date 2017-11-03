@@ -55,7 +55,7 @@ module Make (M : S) = struct
 
 
 
-  (** XXX amélioration possible: tail rec *)	     
+	     
   let  accessible set elt = 
     let rec explore el dirs cc = match dirs with 
       |[] -> cc
@@ -70,6 +70,8 @@ module Make (M : S) = struct
 	  explore el q cc
     in
     explore elt Hex.all_directions (HSet.add HSet.empty elt)
+
+ 
 
   let neighbours set elt =
     let nb = Array.make 6 (-1,-1) in
@@ -95,10 +97,11 @@ module Make (M : S) = struct
 	a_neighbour := nbours.(i)	  
       )
     done;
-    (*ici, l'idée est de regarder la connexité de l'ensemble formé uniquement des voisins de [el]*)
+    (* ici, l'idée est de regarder la connexité de l'ensemble formé 
+     * uniquement des voisins de [el]*)
     if fst !a_neighbour >= 0 then
-      (* XXX utiliser accessible est un peu lourd *)
-      HSet.cardinal (accessible !set_neighbours !a_neighbour) <> HSet.cardinal !set_neighbours
+      HSet.cardinal (accessible !set_neighbours !a_neighbour) <>
+	HSet.cardinal !set_neighbours
     else
       false
 
@@ -123,20 +126,57 @@ module Make (M : S) = struct
     done;
     !ccs
 
-  let split_own set elt =
+  (*Cette fonction renvoie Some [la même chose que accessible] si
+   * la composante connexe accessible ne contient pas de pengouin (excepté
+   * le pengouin situé en penguin pos) 
+   * Il est recommandé de ne pas l'utiliser (et donc de ne pas la mettre)
+   * dnans le mli. Utiliser à la place split_exclusive*)   
+  let accessible_exclusive set elt penguin_pos =
+    let rec explore el dirs cc =
+      match dirs with
+      |[] -> Some cc
+      |dir::q-> 
+	let next_el =  Hex.move el dir in
+	if HSet.member set next_el then
+	  if  not (HSet.member cc next_el) then
+	    begin
+	      match explore next_el
+			    Hex.all_directions
+			    (HSet.add cc next_el) with
+	      |None -> None
+	      |Some x ->explore el q x
+	    end
+	  else
+	    explore el q cc
+	else
+	  begin
+	    if MapIO.get_cell (fst next_el) (snd next_el) = PENGUIN
+	    && next_el <> penguin_pos then
+	      None
+	    else
+	      explore el q cc
+	  end
+    in
+    explore elt Hex.all_directions (HSet.add HSet.empty elt)
+
+
+	    
+  let split_exclusive set elt =
     let ccs = ref [] in (*ccs pour composantes connexes*)
     let nbours = neighbours set elt in
     let del_elt = HSet.remove set elt in 
-    
+
     for i = 0 to Array.length nbours - 1 do
       if fst nbours.(i) >= 0 then
 	begin
-	  let new_cc = accessible del_elt nbours.(i) in
-	  for j = i + 1 to Array.length nbours - 1 do
-	    if fst nbours.(i) >= 0 && HSet.member new_cc nbours.(j) then
-	      nbours.(j) <- (-1,-1)
-	  done;
-	  ccs := new_cc :: !ccs
+	  match accessible_exclusive del_elt nbours.(i) elt with
+	  |None -> ()
+	  |Some new_cc ->
+	    for j = i + 1 to Array.length nbours - 1 do
+	      if fst nbours.(i) >= 0 && HSet.member new_cc nbours.(j) then
+		nbours.(j) <- (-1,-1)
+	    done;
+	    ccs := new_cc :: !ccs
 	end
     done;
     !ccs
@@ -359,10 +399,11 @@ module Make (M : S) = struct
 	   
 	  end
 	  
-      |_-> failwith "Une configuration dans la file de priorité 
+      |_-> failwith "Une configuration dans la file de priorité \
 		     n'a pas été insérée dans la table"
 
     in
+
 
     (*boucle principale : gestion des priorités*)
     let rec max_path_tmp () =
@@ -398,9 +439,25 @@ let accessible_test _ =
   assert_equal acc.(1).(5) PENGUIN;
   assert_equal acc.(1).(4) (ICE 1);
   assert_equal acc.(1).(3) (ICE 1);
-  assert_equal acc.(2).(1) WATER;
-  MapIO.pp_grid Format.std_formatter acc
+  assert_equal acc.(2).(1) WATER
+  (*MapIO.pp_grid Format.std_formatter acc*)
 
+let split_exc_test _ =
+  MapIO.open_map "test/accessible_test.json";
+  let module Grid : S= struct
+    let grid = MapIO.get_map ()
+			   
+  end
+  in
+  let module Path = Make (Grid) in
+  let spl_exc  = Path.split_exclusive Path.grid_set (1,1) in
+  match spl_exc with
+  |[s] -> let g = Path.grid_of_set s in
+	  assert_equal g.(0).(1) (ICE 1);
+	  assert_equal g.(2).(1) WATER
+(*  MapIO.pp_grid Format.std_formatter g*)
+  |_ -> failwith "exclusive scoop : split_exclusive is not working"
 
-let tests = ["accessible">:: accessible_test]
+let tests = ["accessible">:: accessible_test;
+	    "split_exclusive">:: split_exc_test]
 		 

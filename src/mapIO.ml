@@ -9,7 +9,15 @@ let map = ref [|[||]|]
 let players = ref [||]
 let turn = ref 0
 let get_name () = !name
-let get_map () = !map
+let get_cell l c =
+  if l >=0 && c >= 0&& l < Array.length !map && c <  Array.length !map.(0) then
+    !map.(l).(c)
+  else
+    WATER
+      
+let dimensions () = (Array.length !map , Array.length !map.(0))
+
+let get_map () = Array.map Array.copy !map
 let get_players () = !players
 let get_turn () = !turn
 

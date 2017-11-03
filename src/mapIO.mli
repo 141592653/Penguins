@@ -40,8 +40,15 @@ type elt = ICE of int | WATER | PENGUIN
 (**Nom de la map*)
 val get_name : unit -> string
 					 
-(**Tableau représentant la map*)
+(**Tableau représentant la map. Renvoie une copie du tableau.
+L'utilisation de cette fonction en dehors des tests n'est pas recommandée*)
 val get_map : unit -> elt array array
+
+(**Renvoie la case demandée*)
+val get_cell : int -> int -> elt
+
+(** Renvoie (h,w) le nombre de ligne et de colonnes de la carte*)
+val dimensions : unit -> int*int
 	      
 (**Tableau contenant l'ensemble des joueurs*)
 val get_players : unit -> Player.player array
