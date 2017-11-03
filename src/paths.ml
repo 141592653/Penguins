@@ -40,7 +40,7 @@ module Make (M : S) = struct
     new_grid
 
  
-  
+  (*renvoie tous les mouvements autorisés*)
   let all_moves set elt =
     let moves  = ref [] in 
     let rec explore_dir dir pos i =
@@ -142,6 +142,26 @@ module Make (M : S) = struct
     done;
     !ccs
 
+  let split_own set elt =
+    let ccs = ref [] in (*ccs pour composantes connexes*)
+    let nbours = neighbours set elt in
+    let del_elt = HSet.remove set elt in 
+    
+    for i = 0 to Array.length nbours - 1 do
+      if fst nbours.(i) >= 0 then
+	begin
+	  let new_cc = accessible del_elt nbours.(i) in
+	  for j = i + 1 to Array.length nbours - 1 do
+	    if fst nbours.(i) >= 0 && HSet.member new_cc nbours.(j) then
+	      nbours.(j) <- (-1,-1)
+	  done;
+	  ccs := new_cc :: !ccs
+	end
+    done;
+    !ccs
+
+     
+
   module HMap = struct 
     let table = Hashtbl.create 100
     (*à chaque configuration, on associe un nombre de marquage, un pré-chemin et un post-chemin et leur longueur respective (tout ça dans status)*)
@@ -164,7 +184,7 @@ module Make (M : S) = struct
    
   end
 
-		  (*le premier entier  est la longueur du pré chemin, le second le nombre de cases restantes *)
+  (*le premier entier  est la longueur du pré chemin, le second le nombre de cases restantes *)
   (* XXX et le booléen ? je vais devoir le deviner plus loin... *)
   module KeysDis : Priority.ORDERED with type t = bool*int*int = struct 
     type t = bool*int*int
@@ -232,7 +252,8 @@ module Make (M : S) = struct
       match HMap.find_conf conf with
       |Some(tag_nb,(pre_path_size,pre_conf),(old_path_size,old_path)) ->
 	if post_path_size > old_path_size then (
-	  HMap.add_conf conf (tag_nb,(pre_path_size,pre_conf),(post_path_size,post_path));
+	  HMap.add_conf conf (tag_nb,(pre_path_size,pre_conf),
+			      (post_path_size,post_path));
 	  (*il ne faut pas continuer si on est à le racine*)
 	  if pre_path_size > 0 then 
 	    lift_post_path pre_conf (post_path_size + 1, (snd conf)::post_path)
@@ -287,15 +308,24 @@ module Make (M : S) = struct
 	    |None ->
 	      add_pre_tag := 1;
 	      HMap.add_conf next_conf (-1,(new_path_size,pre_conf),(0,[]));
-	      ignore (Prior.insert prior (disconnected next_set next_elt,new_path_size,HSet.cardinal next_set) next_conf)
+	      ignore (Prior.insert prior
+			(disconnected next_set next_elt,
+			 new_path_size,HSet.cardinal next_set)
+			next_conf)
 	    |Some(nb_tag,(old_path_size,old_pre_conf),(post_path_size,post_path)) ->
-	      if new_path_size > old_path_size && (nb_tag > 0 || nb_tag = -1)  then (
-		add_pre_tag := 1;
-		lift_tag old_pre_conf;
-		HMap.add_conf next_conf (nb_tag,(new_path_size,pre_conf),(post_path_size,post_path));
-		(*TODO decrease_key*)
-		ignore (Prior.insert prior (disconnected next_set next_elt, new_path_size,HSet.cardinal (fst pre_conf)) next_conf)
-	      );
+	      if new_path_size > old_path_size && (nb_tag>0 || nb_tag= -1) then
+		begin
+		  add_pre_tag := 1;
+		  lift_tag old_pre_conf;
+		  HMap.add_conf next_conf (nb_tag,(new_path_size,pre_conf),
+					 (post_path_size,post_path));
+		  (*TODO decrease_key*)
+		  ignore (Prior.insert
+			    prior
+			    (disconnected next_set next_elt,
+			     new_path_size,HSet.cardinal (fst pre_conf))
+			    next_conf)
+		end;
 	      lift_post_path pre_conf (post_path_size + 1,next_elt::post_path)
 	  end;
 		  
@@ -309,7 +339,8 @@ module Make (M : S) = struct
       match HMap.find_conf conf with
       (*si la configuration est dans la file normalement elle est dans la table
        de plus, elle ne doit pas être marquée*)
-      |Some(tag_nb,(pre_path_size,pre_conf),(post_path_size,post_path)) when tag_nb <> 0 ->
+      |Some(tag_nb,(pre_path_size,pre_conf),(post_path_size,post_path))
+	   when tag_nb <> 0 ->
         
 	let moves = all_moves set elt in
 	if moves = [] then
@@ -324,7 +355,8 @@ module Make (M : S) = struct
 		       split set elt
 		     else
 		       [HSet.remove set elt] in 
-	   let new_tag_nb = browse_moves moves conf ccs pre_conf (pre_path_size + 1) in
+	   let new_tag_nb = browse_moves moves conf ccs pre_conf
+					 (pre_path_size + 1) in
 	   if tag_nb = -1 then (
 	     (match HMap.find_conf conf with
 	      |Some(_,(pre_size,pre_conf),post) ->
