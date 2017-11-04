@@ -8,7 +8,7 @@ let locale = GtkMain.Main.init ()
 let font_name = "fixed"
 (* let font_name = "-*-helvetica-medium-r-normal-*-120-*" *)
 
-(* TODO: erruer différente *)
+(* TODO: erreur différente *)
 let font = try
     Gdk.Font.load font_name
   with
@@ -21,8 +21,6 @@ let st = status#new_context ~name:"st"
 (* use these functions to display messages in the status bar *)
 let st_push s = ignore (st#pop(); st#push s)
 let st_flash ?delay:(delay=5000) s = ignore (st#pop(); st#flash ~delay s)
-
-(* TODO même chose pour un printf dans la console ? *)
 
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
@@ -57,14 +55,10 @@ let [@warning "-48"] main () =
 
   (* draw the board (hexagons etc.) in the drawing area *)
   let draw_board () =
-    (* suppose that MapIO.map was successfully loaded *)
-    let map = MapIO.get_map() in
-    (* TODO assert sur les tailles *)
-    let m = Array.length map in
-    let n = Array.length map.(0) in
 
-    (* da#misc#realize();  (\* avoid exception Gpointer.Null *\) *)
+    let (m,n) = MapIO.dimensions () in
     da#set_size ~height:(50*m) ~width:(56*n);
+
     (* make it handling mouse clicks *)
     let button_pressed ev =
       if GdkEvent.Button.button ev = 1 then (
@@ -114,7 +108,7 @@ let [@warning "-48"] main () =
         for j = 0 to n - 1 do
           let x = j * 53 + (if i mod 2 = 1 then 0 else 26) in
           let y = i * 46 in
-          match map.(i).(j) with
+          match MapIO.get_cell i j with
           | ICE(v) ->  draw#put_pixbuf ~x ~y pixbuf_ice;
                        draw#string (string_of_int v) ~font ~x:(x+29) ~y:(y+37)
           | WATER -> draw#put_pixbuf ~x ~y pixbuf_water;
