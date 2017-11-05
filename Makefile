@@ -1,5 +1,5 @@
 PACKAGES=-package lablgtk2 -package oUnit -package yojson
-BUILD=ocamlbuild -use-ocamlfind \
+BUILD=ocamlbuild -use-ocamlfind -tag thread \
 	-cflags "-g -w +A-4"\
 	$(PACKAGES)
 
