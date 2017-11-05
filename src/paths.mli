@@ -42,7 +42,7 @@ module Make (M : S) : sig
   (** Calcul de la solution optimale à partir d'une position
       * donnée. L'entier est simplement la longueur de la liste
       * de mouvements à effectuer. *)
-  val maxpath : Hex.pos -> int * Hex.pos list
+  val max_path : Hex.pos -> int * Hex.pos list
 
 end
 

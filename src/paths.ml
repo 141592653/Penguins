@@ -6,7 +6,7 @@ module type S = sig
 end
 
 module Make (M : S) = struct
-  let priority_size = ref 0
+  let priority_size = ref 1000
   let prior_calls =ref 0
 		       
   module FinPos : Bitset.FIN with type t = Hex.pos = struct
@@ -208,8 +208,10 @@ module Make (M : S) = struct
    
   end
 
-  (*le premier entier  est la longueur du pré chemin, le second le nombre de cases restantes *)
-  (* XXX et le booléen ? je vais devoir le deviner plus loin... *)
+  (*le premier entier  est la longueur du pré chemin, le second le nombre de cases 
+   * restantes 
+   * le booléen vaut le résultat de l'heuristique disconnected 
+   *)
   module KeysDis : Priority.ORDERED with type t = bool*int*int = struct 
     type t = bool*int*int
     let compare (b1,x1,x2) (b2,y1,y2) =
@@ -224,7 +226,8 @@ module Make (M : S) = struct
 	0
       else
 	1
- end
+  end
+								   
   module KeysSum : Priority.ORDERED with type t = bool*int*int = struct 
     type t = bool*int*int
     let compare (_,x1,x2) (_,y1,y2) =
@@ -261,14 +264,32 @@ module Make (M : S) = struct
 	      else
 		find_cc q elt
 
-		
 
-  let maxpath init_elt =
+  (*Renvoie le nombre de poissopns à la position pos*)
+  let get_nb_fish pos =
+    match MapIO.get_cell (fst pos) (snd pos) with
+    |ICE n -> n
+    |_ -> failwith "No fish on NOICE"
+		   
+
+  (*The number of fishs in the set*)
+  let fishs_on_set s =
+    let sum = ref 0 in 
+    HSet.iter s (fun el ->
+		 match MapIO.get_cell (fst el) (snd el) with
+		 |ICE n -> sum := !sum + n
+		 |_ -> ()
+		);
+    !sum
+		   
+	    
+  let max_path init_elt =
     (*initialisation*)
-    (* XXX c'est rude avec aussi peu de doc.. *)
     let prior = Prior.create !priority_size (false,0,0) (HSet.empty,init_elt) in
+    let acc = accessible grid_set init_elt in 
+    (*Insertion de la première configuration dans la file de priorité*)
     ignore (Prior.insert prior
-			 (false,0,HSet.cardinal grid_set)
+			 (false,0,fishs_on_set grid_set)
 			 (grid_set,init_elt));
     HMap.add_conf (grid_set,init_elt) (-1,(0,(grid_set,init_elt)),(-1,[]));
     let max_path = ref (-1) in
@@ -283,8 +304,9 @@ module Make (M : S) = struct
 	  HMap.add_conf conf (tag_nb,(pre_path_size,pre_conf),
 			      (post_path_size,post_path));
 	  (*il ne faut pas continuer si on est à le racine*)
-	  if pre_path_size > 0 then 
-	    lift_post_path pre_conf (post_path_size + 1, (snd conf)::post_path)
+	  if pre_path_size > 0 then
+	    lift_post_path pre_conf (post_path_size + get_nb_fish (snd conf),
+				     (snd conf)::post_path)
 	  else (*sinon, mise à jour de max_path*)
 	    max_path := post_path_size
 	    
@@ -327,7 +349,7 @@ module Make (M : S) = struct
       |m::q ->
 	let next_elt = Hex.move_n elt m in 
 	let next_set = find_cc ccs next_elt in
-	if (new_path_size + HSet.cardinal next_set <= !max_path) then
+	if (new_path_size + fishs_on_set next_set <= !max_path) then
 	  lift_tag pre_conf
 	else
 	  begin
@@ -339,7 +361,7 @@ module Make (M : S) = struct
 	      HMap.add_conf next_conf (-1,(new_path_size,pre_conf),(0,[]));
 	      ignore (Prior.insert prior
 			(disconnected next_set next_elt,
-			 new_path_size,HSet.cardinal next_set)
+			 new_path_size,fishs_on_set next_set)
 			next_conf)
 	    |Some(nb_tag,(old_path_size,old_pre_conf),
 		  (post_path_size,post_path)) ->
@@ -356,7 +378,8 @@ module Make (M : S) = struct
 			     new_path_size,HSet.cardinal (fst pre_conf))
 			    next_conf)
 		end;
-	      lift_post_path pre_conf (post_path_size + 1,next_elt::post_path)
+	      lift_post_path pre_conf (post_path_size + get_nb_fish next_elt,
+				       next_elt::post_path)
 	  end;
 		  
 	!add_pre_tag + browse_moves q pre_conf ccs  pre_path new_path_size
@@ -427,28 +450,28 @@ module Make (M : S) = struct
     
 end
 
+(* ***** Tests ***** *)
+
 let accessible_test _ =
   MapIO.open_map "test/accessible_test.json";
   let module Grid : S= struct
     let grid = MapIO.get_map ()
-			   
-  end
-  in
+  end in
   let module Path = Make (Grid) in
   let acc = Path.grid_of_set (Path.accessible Path.grid_set (1,5)) in
   assert_equal acc.(1).(5) PENGUIN;
   assert_equal acc.(1).(4) (ICE 1);
   assert_equal acc.(1).(3) (ICE 1);
   assert_equal acc.(2).(1) WATER
-  (*MapIO.pp_grid Format.std_formatter acc*)
+(*MapIO.pp_grid Format.std_formatter acc*)
+
+			  
 
 let split_exc_test _ =
   MapIO.open_map "test/accessible_test.json";
   let module Grid : S= struct
-    let grid = MapIO.get_map ()
-			   
-  end
-  in
+    let grid = MapIO.get_map ()		   
+  end in
   let module Path = Make (Grid) in
   let spl_exc  = Path.split_exclusive Path.grid_set (1,1) in
   match spl_exc with
@@ -458,6 +481,24 @@ let split_exc_test _ =
 (*  MapIO.pp_grid Format.std_formatter g*)
   |_ -> failwith "exclusive scoop : split_exclusive is not working"
 
+
+		 
+let max_path_test _ =
+  MapIO.open_map "test/accessible_test.json";
+  let module Grid : S= struct
+    let grid = MapIO.get_map ()		   
+  end in
+  let module Path = Make (Grid) in
+  let (_,p) = Path.max_path (1,1) in
+  
+  let acc = Path.grid_of_set (Path.accessible Path.grid_set (1,1)) in
+  MapIO.pp_grid Format.std_formatter acc;
+  MapIO.pp_path Format.std_formatter p
+  
+
+		 
+
 let tests = ["accessible">:: accessible_test;
-	    "split_exclusive">:: split_exc_test]
+	     "split exclusive">:: split_exc_test;
+	     "max path">:: max_path_test]
 		 
