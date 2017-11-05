@@ -56,6 +56,8 @@ val get_players : unit -> Player.player array
 (**Numéro du joueur dont c'est le tour*)
 val get_turn : unit -> int 
 	     
+(**Passer au joueur suivant*)
+val next_turn : unit -> unit
 
 
 (**Open a new map*)

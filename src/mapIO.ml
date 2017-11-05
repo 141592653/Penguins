@@ -20,6 +20,7 @@ let dimensions () = (Array.length !map , Array.length !map.(0))
 let get_map () = Array.map Array.copy !map
 let get_players () = !players
 let get_turn () = !turn
+let next_turn () = turn := (!turn + 1) mod (Array.length !players)
 
 
 
