@@ -20,7 +20,7 @@ class virtual player : string -> Hex.pos ->
 	 val is_ready : bool
 			   
 	 (**Asks the player to play*)
-	 method virtual play : unit -> unit
+	 method virtual play : unit
 
 	 (** Name getter*)
 	 method get_name : string
@@ -39,11 +39,15 @@ class virtual player : string -> Hex.pos ->
 
 	 (** Moves the player*)
 	 method move : Hex.move -> unit
+
+         (** True for human players (need to wait for an event) *)
+	 method virtual is_human : bool
        end
 
 (** This class represents human players *)
 class humanPlayer : string -> Hex.pos ->
       object
 	inherit player
-	method  play : unit -> unit
+	method  play : unit
+	method  is_human : bool
       end
