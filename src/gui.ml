@@ -28,6 +28,8 @@ let st_flash ?delay:(delay=5000) s = ignore (st#pop(); st#flash ~delay s)
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
 
+(* Vrai lorsque c'est le tour d'un joueur humain *)
+let click_request = ref false
 
 (** handle quit signal, ask to save game if necessary *)
 let quit () =
@@ -42,6 +44,64 @@ let pixbuf_water = GdkPixbuf.from_file "img/water.png"
 let pixbuf_penguin = GdkPixbuf.from_file "img/penguin.png"
 let pixbuf_penguin_s = GdkPixbuf.from_file "img/penguin_s.png"
 
+(* draw the board (hexagons etc.) in the drawing area *)
+let draw_board () =
+
+  let (m,n) = MapIO.dimensions () in
+  da#set_size ~height:(50*m) ~width:(56*n);
+
+  let expose _ =
+    (* position of the current player *)
+    let (i_c,j_c) = (MapIO.get_players()).(MapIO.get_turn())#get_pos in
+    let draw = new GDraw.drawable da#misc#window in
+    (* draw#put_pixbuf ~x:0 ~y:0 pixbuf_ice; *)
+    (* draw#put_pixbuf ~x:53 ~y:0 pixbuf_water; *)
+    (* draw#put_pixbuf ~x:26 ~y:46 pixbuf_ice; *)
+    for i = 0 to m - 1 do
+      for j = 0 to n - 1 do
+        let x = j * 53 + (if i mod 2 = 1 then 0 else 26) in
+        let y = i * 46 in
+        match MapIO.get_cell i j with
+        | ICE(v) ->  draw#put_pixbuf ~x ~y pixbuf_ice;
+                     draw#string (string_of_int v) ~font ~x:(x+29) ~y:(y+37)
+        | WATER -> draw#put_pixbuf ~x ~y pixbuf_water;
+        | PENGUIN -> if (i,j) = (i_c,j_c)
+                     then draw#put_pixbuf ~x ~y pixbuf_penguin_s
+                     else draw#put_pixbuf ~x ~y pixbuf_penguin
+      done;
+    done;
+    false
+  in
+  ignore (da#event#connect#expose ~callback:expose)
+
+
+(* play until the turn of a human player *)
+let rec play () =
+  let players = MapIO.get_players() in
+  let turn = MapIO.get_turn() in
+  draw_board();
+  st_push ("Au tour du joueur " ^ (string_of_int turn));
+  let player = players.(turn) in
+  if player#is_human
+  then
+    click_request := true
+  else begin
+      player#play;
+      (* TODO actualiser ? *)
+      MapIO.next_turn();
+      play();
+    end
+
+
+(* return the Hex.move from initial position to destination *)
+(* invalid moves have second component equal to -1 *)
+let move_of_pos (i_s,j_s) (i_d,j_d) =
+  if i_s = -1 || i_d = -1 then
+    (Hex.E,-1)
+  else if i_s = i_d
+  then ((if j_s < j_d then Hex.E else Hex.W), (abs j_s - j_d))
+  else                          (* TODO *)
+    (Hex.E,-1)
 
 (* handle mouse clicks on the game board *)
 let button_pressed ev =
@@ -77,47 +137,20 @@ let button_pressed ev =
       if i >= m || j >= n then (-1,-1) else (i,j)
     in
     let (i,j) = mouse_to_coord (x,y) in
-    Printf.printf "(%d,%d)\n%!" i j);
-    true
+    Printf.printf "(%d,%d)\n%!" i j;
 
-
-(* draw the board (hexagons etc.) in the drawing area *)
-let draw_board () =
-
-  let (m,n) = MapIO.dimensions () in
-  da#set_size ~height:(50*m) ~width:(56*n);
-
-  let expose _ =
-    (* position of the current player *)
-    let (i_c,j_c) = (MapIO.get_players()).(MapIO.get_turn())#get_pos in
-    let draw = new GDraw.drawable da#misc#window in
-    (* draw#put_pixbuf ~x:0 ~y:0 pixbuf_ice; *)
-    (* draw#put_pixbuf ~x:53 ~y:0 pixbuf_water; *)
-    (* draw#put_pixbuf ~x:26 ~y:46 pixbuf_ice; *)
-    for i = 0 to m - 1 do
-      for j = 0 to n - 1 do
-        let x = j * 53 + (if i mod 2 = 1 then 0 else 26) in
-        let y = i * 46 in
-        match MapIO.get_cell i j with
-        | ICE(v) ->  draw#put_pixbuf ~x ~y pixbuf_ice;
-                     draw#string (string_of_int v) ~font ~x:(x+29) ~y:(y+37)
-        | WATER -> draw#put_pixbuf ~x ~y pixbuf_water;
-        | PENGUIN -> if (i,j) = (i_c,j_c)
-                     then draw#put_pixbuf ~x ~y pixbuf_penguin_s
-                     else draw#put_pixbuf ~x ~y pixbuf_penguin
-      done;
-    done;
-    false
-  in
-  ignore (da#event#connect#expose ~callback:expose)
-
-(* play until the turn of a human player *)
-let play () =
-  let players = MapIO.get_players() in
-  let turn = MapIO.get_turn() in
-  draw_board();
-  st_push ("Au tour du joueur " ^ (string_of_int turn))
-(* TODO *)
+    if !click_request
+    then begin
+        try
+          let player = (MapIO.get_players()).(MapIO.get_turn()) in
+          MapIO.move player#get_name (move_of_pos player#get_pos (i,j));
+          click_request := false;
+          MapIO.next_turn();
+          play()
+        with Invalid_argument s -> st_flash s
+      end
+  );
+  true
 
 let load_game filename =
   try
