@@ -185,7 +185,7 @@ let reload_game () =
   then st_flash "Impossible de recharger la partie"
   else load_game !filename
 
-let chose_file () =
+let chose_game () =
   st_push "Chargement d'un nouveau jeu...";
   let filew = GWindow.file_chooser_dialog
                 ~action:`OPEN
@@ -197,8 +197,63 @@ let chose_file () =
   filew#add_select_button_stock `OPEN `OPEN;
   begin match filew#run(), filew#filename with
   | `OPEN, Some filename ->
-     load_game filename;
      filew#destroy ();
+     load_game filename;
+  | _ -> filew#destroy ();
+         st#pop();
+  end
+
+let new_game () =
+  let ask_options mapname =
+    let dialog = GWindow.dialog ~title:"Créer une nouvelle partie"
+                                ~modal:true (* freeze the rest of the program *)
+                                () in
+    let nplayers = 3 in         (* TODO récupérer npayers à partir de la map *)
+
+    dialog#add_button_stock `CANCEL `CANCEL;
+    dialog#add_button_stock `OK `OK;
+    for i = 0 to nplayers-1 do
+      let hbox = GPack.hbox ~packing:dialog#vbox#add () in
+      let label = GMisc.label ~text:"Nom" ~packing:hbox#add () in
+      let entry = GEdit.entry ~text:("Joueur "^(string_of_int i))
+                              ~max_length:20
+                              (* ~has_frame:true *)
+                              ~packing:hbox#add () in
+      let combo = GEdit.combo_box_text
+                    ~active:0
+                    ~strings:["Humain";"IA Standard"]
+                    ~packing:hbox#add () in
+      ()
+    done;
+    let hbox = GPack.hbox ~packing:dialog#vbox#add () in
+    let label = GMisc.label ~text:"Premier joueur" ~packing:hbox#add () in
+    (* liste des n premiers entiers *)
+    let nlist n =
+      let rec aux a =
+        if a >= n then [] else a :: aux (a+1) in
+      aux 0
+    in
+    let combo_turn = GEdit.combo_box_text
+                       ~active:0
+                       ~strings:(List.map string_of_int (nlist nplayers))
+                       ~packing:hbox#add () in
+    (* TODO *)
+    ignore (dialog#run());
+  in
+
+  st_push "Création d'un nouveau jeu...";
+  let filew = GWindow.file_chooser_dialog
+                ~action:`OPEN
+                ~title:"Ouvrir une carte" ~border_width:0
+                ~width:320 ~height:240
+                () in
+  filew#add_filter (GFile.filter ~name:"txt" ~patterns:["*.txt"] ());
+  filew#add_button_stock `CANCEL `CANCEL;
+  filew#add_select_button_stock `OPEN `OPEN;
+  begin match filew#run(), filew#filename with
+  | `OPEN, Some filename ->
+     filew#destroy ();
+     ask_options filename;
   | _ -> filew#destroy ();
          st#pop();
   end
@@ -221,8 +276,8 @@ let [@warning "-48"] main () =
 
   (* File menu *)
   let factory = new GMenu.factory file_menu ~accel_group in
-  ignore (factory#add_item "Nouveau jeu" ~key:_N ~callback:chose_file);
-  ignore (factory#add_item "Ouvrir un fichier" ~key:_O ~callback:chose_file);
+  ignore (factory#add_item "Nouveau jeu" ~key:_N ~callback:new_game);
+  ignore (factory#add_item "Ouvrir un fichier" ~key:_O ~callback:chose_game);
   ignore (factory#add_item "Quitter" ~key:_Q ~callback:quit);
   ignore (factory#add_item "Recharger" ~key:_R ~callback:reload_game);
 
