@@ -7,6 +7,8 @@ let _locale = GtkMain.Main.init ()
 let font_name = "fixed"
 (* let font_name = "-*-helvetica-medium-r-normal-*-120-*" *)
 
+let filename = ref ""
+
 (* TODO: erreur différente *)
 let font = try
     Gdk.Font.load font_name
@@ -23,7 +25,7 @@ let st = status#new_context ~name:"st"
 
 (* use these functions to display messages in the status bar *)
 let st_push s = ignore (st#pop(); st#push s)
-let st_flash ?delay:(delay=5000) s = ignore (st#pop(); st#flash ~delay s)
+let st_flash ?delay:(delay=5000) s = ignore ((* st#pop(); *) st#flash ~delay s)
 
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
@@ -82,6 +84,7 @@ let rec play () =
   draw_board();
   st_push ("Au tour du joueur " ^ (string_of_int turn));
   let player = players.(turn) in
+  (* TODO end game ? *)
   if player#is_human
   then
     click_request := true
@@ -96,12 +99,27 @@ let rec play () =
 (* return the Hex.move from initial position to destination *)
 (* invalid moves have second component equal to -1 *)
 let move_of_pos (i_s,j_s) (i_d,j_d) =
+  Printf.printf "(%d,%d)(%d,%d)\n%!" i_s j_s i_d j_d;
   if i_s = -1 || i_d = -1 then
     (Hex.E,-1)
   else if i_s = i_d
-  then ((if j_s < j_d then Hex.E else Hex.W), (abs j_s - j_d))
-  else                          (* TODO *)
-    (Hex.E,-1)
+  then ((if j_s < j_d then Hex.E else Hex.W), (abs (j_s - j_d)))
+  else let dy = i_s - i_d and dx = j_s - j_d in
+       let x = abs dx and y = abs dy in
+       (* Printf.printf "%d %d %d %d\n%!" dy y dx x; *)
+       if i_s mod 2 = 0
+       then
+         if x = y/2 && dx >= 0
+         then ((if dy > 0 then Hex.NW else Hex.SW),y)
+         else if x = (y+1)/2 && dx < 0
+         then ((if dy > 0 then Hex.NE else Hex.SE),y)
+         else (Hex.E,-1)
+       else
+         if x = (y+1)/2 && dx > 0
+         then ((if dy > 0 then Hex.NW else Hex.SW),y)
+         else if x = y/2 && dx <= 0
+         then ((if dy > 0 then Hex.NE else Hex.SE),y)
+         else (Hex.E,-1)
 
 (* handle mouse clicks on the game board *)
 let button_pressed ev =
@@ -147,19 +165,25 @@ let button_pressed ev =
           click_request := false;
           MapIO.next_turn();
           play()
-        with Invalid_argument s -> st_flash s
+        with Invalid_argument s -> st_flash ~delay:3000 s
       end
   );
   true
 
-let load_game filename =
+let load_game file =
   try
-    prerr_endline ("ouverture du ficher "^filename);
-    MapIO.open_map filename;
+    prerr_endline ("ouverture du ficher "^file);
+    MapIO.open_map file;
     window#set_title (MapIO.get_name());
     st_flash "Chargement terminé.";
+    filename := file;
     play()
   with Failure s -> st_flash ~delay:7000 ("Erreur de chargement : "^s)
+
+let reload_game () =
+  if !filename = ""
+  then st_flash "Impossible de recharger la partie"
+  else load_game !filename
 
 let chose_file () =
   st_push "Chargement d'un nouveau jeu...";
@@ -200,6 +224,7 @@ let [@warning "-48"] main () =
   ignore (factory#add_item "Nouveau jeu" ~key:_N ~callback:chose_file);
   ignore (factory#add_item "Ouvrir un fichier" ~key:_O ~callback:chose_file);
   ignore (factory#add_item "Quitter" ~key:_Q ~callback:quit);
+  ignore (factory#add_item "Recharger" ~key:_R ~callback:reload_game);
 
   (* automatic scrolling bars *)
   let scroll = GBin.scrolled_window
