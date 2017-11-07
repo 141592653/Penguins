@@ -56,11 +56,23 @@ val get_players : unit -> Player.player array
 (**Numéro du joueur dont c'est le tour*)
 val get_turn : unit -> int 
 	     
+(**Utile à la création d'un nouveau jeu*)
+val set_turn : int -> unit
+
 (**Passer au joueur suivant*)
 val next_turn : unit -> unit
 
 
-(**Open a new map*)
+(**Parse a map txt file. Return the grid and the list of player's positions*)
+val parse_map : string -> elt array array * Hex.pos list
+
+(**Set the map and initialize the players array. For each player the tuple
+ * is (position, name, type) where type = 'Humain', 'IA Standard', etc *)
+val set_map_and_players : elt array array
+                          -> (Hex.pos * string * string) list
+                          -> unit
+
+(**Open a new game, in json format*)
 val open_map: string -> unit
 
 (**Text-based pretty printer of a map*)

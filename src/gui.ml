@@ -9,6 +9,13 @@ let font_name = "fixed"
 
 let filename = ref ""
 
+(* Vrai lorsque c'est le tour d'un joueur humain *)
+let click_request = ref false
+
+(* List des joueurs bloqués *)
+let blocked_players = ref []
+
+
 (* TODO: erreur différente *)
 let font = try
     Gdk.Font.load font_name
@@ -29,9 +36,6 @@ let st_flash ?delay:(delay=5000) s = ignore ((* st#pop(); *) st#flash ~delay s)
 
 (* Drawing area to display the game board *)
 let da = GMisc.drawing_area ()
-
-(* Vrai lorsque c'est le tour d'un joueur humain *)
-let click_request = ref false
 
 (** handle quit signal, ask to save game if necessary *)
 let quit () =
@@ -81,8 +85,6 @@ let blocked pos =
   List.for_all
     (fun d -> let (b,_) = MapIO.legal_move_n pos (d,1) in not b)
     Hex.all_directions
-
-let blocked_players = ref []
 
 (* play until the turn of a human player *)
 let rec play () =
@@ -223,18 +225,22 @@ let chose_game () =
 
 let [@warning "-48"] new_game () =
   let ask_options mapname =
+
+    let (map,players_pos) = MapIO.parse_map mapname in (* TODO try exc !!! *)
+    let nb_players = List.length players_pos in
+
     let dialog = GWindow.dialog ~title:"Créer une nouvelle partie"
                                 ~modal:true (* freeze the rest of the program *)
                                 ~allow_grow:true (* TODO only vertical *)
                                 ~allow_shrink:false
                                 ~height:250
                                 () in
+    (* TODO aperçu de la carte ? *)
     let scroll = GBin.scrolled_window
                    ~hpolicy:`NEVER ~vpolicy:`AUTOMATIC
                    ~packing:(dialog#vbox#pack ~expand:true) () in
     let vbox = GPack.vbox ~packing:scroll#add_with_viewport () in
 
-    let nb_players = 5 in   (* TODO récupérer npayers à partir de la map *)
     (* tableau des champs utiles à l'initialisation des données pour chaque
      joueur *)
     let tab = Array.make nb_players (GEdit.entry(),GEdit.combo_box_text()) in
@@ -285,6 +291,7 @@ let [@warning "-48"] new_game () =
     (* Récupérer les valeur entrées par l'utilisateur *)
     match dialog#run() with
     | `OK ->
+       let infos = Array.make nb_players ((0,0),"","") in
        let turn = match (GEdit.text_combo_get_active combo_turn) with
          | None -> 0
          | Some(txt) -> int_of_string txt
@@ -299,11 +306,17 @@ let [@warning "-48"] new_game () =
            | "" -> "Joueur "^(string_of_int i);
            | s -> s
          in
-         ()
+         infos.(i) <- (List.nth players_pos i, player_name, txt)
        done;
-       (* TODO initialiser partie avec mapname et infos des joueurs *)
+
+       MapIO.set_map_and_players map (Array.to_list infos);
+       MapIO.set_turn turn;
+       filename := "";
+       blocked_players := [];
        dialog#destroy();
        st#pop();
+       (* Nom de la map ? TODO fonction d'actualisation *)
+       play()
     | _ -> dialog#destroy();
            st#pop();
   in

@@ -19,6 +19,7 @@ let dimensions () = (Array.length !map , Array.length !map.(0))
 
 let get_map () = Array.map Array.copy !map
 let get_players () = !players
+let set_turn n = turn := n
 let get_turn () = !turn
 let next_turn () = turn := (!turn + 1) mod (Array.length !players)
 
@@ -144,7 +145,7 @@ let [@warning "-8"] parse_map map_file =
    * !max_length est pair et on tombe sur ce qu'on veut 
    * Sinon, on doit ajouter 1. D'où  !max_length_num mod 2. µ *)
   let line_length = ((!max_length_num mod 2) + !max_length)/2  in
-  map  := Array.make_matrix !nb_lines line_length WATER ; 
+  let map = ref (Array.make_matrix !nb_lines line_length WATER) in
   let penguins_pos = ref [] in 
   
   (* ici nb_lines sera le numéro de la ligne en cours de traitement dans la 
@@ -178,7 +179,7 @@ let [@warning "-8"] parse_map map_file =
     lines := q;
     nb_lines := !nb_lines - 1
   done;
-  !penguins_pos
+  (!map, !penguins_pos)
     
     
 
@@ -196,29 +197,49 @@ let json_from_file s =
 	     
 let default_player = new Player.humanPlayer "" (0,0)
 
+
+(* Positionne map et remplit le tableau des joueurs en fonction des infos
+ * de la liste players_info *)
+let set_map_and_players map_ players_info =
+  map := map_;
+  players :=  Array.make (List.length players_info) default_player;
+
+  let num_pl = ref 0 in
+  let create_player pl_tmp =
+    let (pl_pos,pl_name,pl_type) = pl_tmp in
+    let player =
+      match pl_type with
+      | "Humain" -> new Player.humanPlayer pl_name pl_pos;
+      | s ->  prerr_endline ("Attention le type de joueur "^s^" n'est pas \
+                              implémenté, prenons plutôt Humain");
+              new Player.humanPlayer pl_name pl_pos;
+    in
+    !players.(!num_pl) <- player;
+    num_pl := !num_pl + 1
+  in
+  List.iter create_player players_info
+
+
+
 let open_map s =
   (*by default, the name is the name of the json file without the extension*)
   name := String.sub s 0 (String.length s - 5);
   let json = json_from_file s in
   let (players_tmp,map_file) = parse_main_json json in
-  let players_pos = parse_map map_file in
+  let (map_,players_pos) = parse_map map_file in
   let nb_players = List.length players_pos in   
-  players := if nb_players = List.length players_tmp then
-		Array.make nb_players default_player
-	      else
-		failwith "The number of players specified in the \
-			  json file is not the same as which of the map file";
+  if nb_players <> List.length players_tmp then
+    failwith "The number of players specified in the \
+	      json file is not the same as which of the map file";
 
-  let num_pl = ref 0 in
-		 
-  let create_player pl_tmp =
-    let (pl_name,n) = pl_tmp in
-    !players.(!num_pl) <- new Player.humanPlayer pl_name (List.nth players_pos n);
-    num_pl := !num_pl + 1 in 
-			
-  List.iter create_player players_tmp
-
-	    
+  (* bof bof, à revoir *)
+  let human = Array.make nb_players "Humain" in
+  let list = (List.combine
+                (List.combine players_pos
+                              (List.map fst players_tmp))
+                (Array.to_list human))
+  in
+  set_map_and_players map_ (List.map (fun ((p,n),t) -> (p,n,t)) list)
 (* ********************** Fin parsing **************************** *)
 
 	    
