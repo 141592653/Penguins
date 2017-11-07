@@ -207,8 +207,8 @@ let [@warning "-48"] new_game () =
   let ask_options mapname =
     let dialog = GWindow.dialog ~title:"Créer une nouvelle partie"
                                 ~modal:true (* freeze the rest of the program *)
-                                ~allow_grow:false
-                                ~allow_shrink:false (* TODO only vertical *)
+                                ~allow_grow:true (* TODO only vertical *)
+                                ~allow_shrink:false
                                 ~height:250
                                 () in
     let scroll = GBin.scrolled_window
@@ -216,7 +216,7 @@ let [@warning "-48"] new_game () =
                    ~packing:(dialog#vbox#pack ~expand:true) () in
     let vbox = GPack.vbox ~packing:scroll#add_with_viewport () in
 
-    let nb_players = 3 in   (* TODO récupérer npayers à partir de la map *)
+    let nb_players = 5 in   (* TODO récupérer npayers à partir de la map *)
     (* tableau des champs utiles à l'initialisation des données pour chaque
      joueur *)
     let tab = Array.make nb_players (GEdit.entry(),GEdit.combo_box_text()) in
@@ -230,26 +230,26 @@ let [@warning "-48"] new_game () =
                             ~border_width:6
                             ~packing:frame#add () in
 
-      GMisc.label ~text:"Nom"
-                  ~packing:(hbox#pack ~expand:false) ();
+      ignore (GMisc.label ~text:"Nom"
+                          ~packing:(hbox#pack ~expand:false) ());
 
       let entry = GEdit.entry ~text:("Joueur "^(string_of_int i))
                               ~max_length:40
                               ~has_frame:true
-                              ~packing:(hbox#pack ~expand:false) () in
+                              ~packing:hbox#add () in
       let combo = GEdit.combo_box_text
                     ~active:0
                     ~strings:["Humain";"IA Standard"]
-                    ~packing:hbox#add () in
+                    ~packing:(hbox#pack ~expand:false) () in
 
       tab.(i) <- (entry,combo)
     done;
 
-    (* dialog#action_area#set_layout `END; *)
+    dialog#action_area#set_layout `END;
     dialog#action_area#set_homogeneous false; (* TODO *)
-    let label = GMisc.label
+    ignore (GMisc.label
                   ~text:"Premier tour"
-                  ~packing:dialog#action_area#add () in
+                  ~packing:dialog#action_area#add ());
     (* liste des n premiers entiers *)
     let nlist n =
       let rec aux a =
@@ -259,14 +259,31 @@ let [@warning "-48"] new_game () =
     let combo_turn = GEdit.combo_box_text
                        ~active:0
                        ~strings:(List.map string_of_int (nlist nb_players))
-                       ~packing:dialog#action_area#pack () in
+                       ~packing:(dialog#action_area#pack ~expand:false)() in
+
     dialog#add_button_stock `CANCEL `CANCEL;
     dialog#add_button_stock `OK `OK;
 
+    (* Récupérer les valeur entrées par l'utilisateur *)
     match dialog#run() with
-    | `OK -> (* TODO récuperer les valeurs *)
-       (* let (entry,combo) = tab.(0) in *)
-       (* prerr_endline combo#entry#text; *)
+    | `OK ->
+       let turn = match (GEdit.text_combo_get_active combo_turn) with
+         | None -> 0
+         | Some(txt) -> int_of_string txt
+       in
+       for i = 0 to nb_players-1 do
+         let (entry,combo) = tab.(i) in
+         let txt = match (GEdit.text_combo_get_active combo) with
+           | None -> "Humain"
+           | Some(txt) -> txt
+         in
+         let player_name = match entry#text with
+           | "" -> "Joueur "^(string_of_int i);
+           | s -> s
+         in
+         ()
+       done;
+       (* TODO initialiser partie avec mapname et infos des joueurs *)
        dialog#destroy();
        st#pop();
     | _ -> dialog#destroy();
