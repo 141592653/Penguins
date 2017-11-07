@@ -76,6 +76,13 @@ let draw_board () =
   in
   ignore (da#event#connect#expose ~callback:expose)
 
+(* TODO à unifier avec paths? *)
+let blocked pos =
+  List.for_all
+    (fun d -> let (b,_) = MapIO.legal_move_n pos (d,1) in not b)
+    Hex.all_directions
+
+let blocked_players = ref []
 
 (* play until the turn of a human player *)
 let rec play () =
@@ -83,18 +90,28 @@ let rec play () =
   let turn = MapIO.get_turn() in
   draw_board();
   let player = players.(turn) in
-  st_push ("Au tour du joueur " ^ player#get_name);
-  (* TODO end game ? *)
-  if player#is_human
-  then
-    click_request := true
-  else begin
-      player#play;
-      (* TODO actualiser ? *)
-      MapIO.next_turn();
-      play();
-    end
-
+  if blocked player#get_pos
+  then (
+    if not (List.mem turn !blocked_players)
+    then blocked_players := turn::!blocked_players;
+    if List.length !blocked_players = Array.length(MapIO.get_players())
+    then st_push "Partie terminée" (* TODO : afficher les scores *)
+    else begin
+        MapIO.next_turn();
+        play()
+      end
+  ) else (
+    st_push ("Au tour du joueur " ^ player#get_name);
+    if player#is_human
+    then
+      click_request := true
+    else begin
+        player#play;
+        (* TODO actualiser ? *)
+        MapIO.next_turn();
+        play();
+      end
+  )
 
 (* return the Hex.move from initial position to destination *)
 (* invalid moves have second component equal to -1 *)
@@ -177,6 +194,7 @@ let load_game file =
     window#set_title (MapIO.get_name());
     st_flash "Chargement terminé.";
     filename := file;
+    blocked_players := [];
     play()
   with Failure s -> st_flash ~delay:7000 ("Erreur de chargement : "^s)
 
