@@ -82,8 +82,8 @@ let rec play () =
   let players = MapIO.get_players() in
   let turn = MapIO.get_turn() in
   draw_board();
-  st_push ("Au tour du joueur " ^ (string_of_int turn));
   let player = players.(turn) in
+  st_push ("Au tour du joueur " ^ player#get_name);
   (* TODO end game ? *)
   if player#is_human
   then
@@ -99,7 +99,7 @@ let rec play () =
 (* return the Hex.move from initial position to destination *)
 (* invalid moves have second component equal to -1 *)
 let move_of_pos (i_s,j_s) (i_d,j_d) =
-  Printf.printf "(%d,%d)(%d,%d)\n%!" i_s j_s i_d j_d;
+  (* Printf.printf "(%d,%d)(%d,%d)\n%!" i_s j_s i_d j_d; *)
   if i_s = -1 || i_d = -1 then
     (Hex.E,-1)
   else if i_s = i_d
@@ -203,30 +203,53 @@ let chose_game () =
          st#pop();
   end
 
-let new_game () =
+let [@warning "-48"] new_game () =
   let ask_options mapname =
     let dialog = GWindow.dialog ~title:"Créer une nouvelle partie"
                                 ~modal:true (* freeze the rest of the program *)
+                                ~allow_grow:false
+                                ~allow_shrink:false (* TODO only vertical *)
+                                ~height:250
                                 () in
-    let nplayers = 3 in         (* TODO récupérer npayers à partir de la map *)
+    let scroll = GBin.scrolled_window
+                   ~hpolicy:`NEVER ~vpolicy:`AUTOMATIC
+                   ~packing:(dialog#vbox#pack ~expand:true) () in
+    let vbox = GPack.vbox ~packing:scroll#add_with_viewport () in
 
-    dialog#add_button_stock `CANCEL `CANCEL;
-    dialog#add_button_stock `OK `OK;
-    for i = 0 to nplayers-1 do
-      let hbox = GPack.hbox ~packing:dialog#vbox#add () in
-      let label = GMisc.label ~text:"Nom" ~packing:hbox#add () in
+    let nb_players = 3 in   (* TODO récupérer npayers à partir de la map *)
+    (* tableau des champs utiles à l'initialisation des données pour chaque
+     joueur *)
+    let tab = Array.make nb_players (GEdit.entry(),GEdit.combo_box_text()) in
+
+    for i = 0 to nb_players-1 do
+      let frame = GBin.frame ~label:("Joueur "^(string_of_int i))
+                             ~border_width:3
+                             ~packing:vbox#pack () in
+
+      let hbox = GPack.hbox ~spacing:7
+                            ~border_width:6
+                            ~packing:frame#add () in
+
+      GMisc.label ~text:"Nom"
+                  ~packing:(hbox#pack ~expand:false) ();
+
       let entry = GEdit.entry ~text:("Joueur "^(string_of_int i))
-                              ~max_length:20
-                              (* ~has_frame:true *)
-                              ~packing:hbox#add () in
+                              ~max_length:40
+                              ~has_frame:true
+                              ~packing:(hbox#pack ~expand:false) () in
       let combo = GEdit.combo_box_text
                     ~active:0
                     ~strings:["Humain";"IA Standard"]
                     ~packing:hbox#add () in
-      ()
+
+      tab.(i) <- (entry,combo)
     done;
-    let hbox = GPack.hbox ~packing:dialog#vbox#add () in
-    let label = GMisc.label ~text:"Premier joueur" ~packing:hbox#add () in
+
+    (* dialog#action_area#set_layout `END; *)
+    dialog#action_area#set_homogeneous false; (* TODO *)
+    let label = GMisc.label
+                  ~text:"Premier tour"
+                  ~packing:dialog#action_area#add () in
     (* liste des n premiers entiers *)
     let nlist n =
       let rec aux a =
@@ -235,10 +258,19 @@ let new_game () =
     in
     let combo_turn = GEdit.combo_box_text
                        ~active:0
-                       ~strings:(List.map string_of_int (nlist nplayers))
-                       ~packing:hbox#add () in
-    (* TODO *)
-    ignore (dialog#run());
+                       ~strings:(List.map string_of_int (nlist nb_players))
+                       ~packing:dialog#action_area#pack () in
+    dialog#add_button_stock `CANCEL `CANCEL;
+    dialog#add_button_stock `OK `OK;
+
+    match dialog#run() with
+    | `OK -> (* TODO récuperer les valeurs *)
+       (* let (entry,combo) = tab.(0) in *)
+       (* prerr_endline combo#entry#text; *)
+       dialog#destroy();
+       st#pop();
+    | _ -> dialog#destroy();
+           st#pop();
   in
 
   st_push "Création d'un nouveau jeu...";
