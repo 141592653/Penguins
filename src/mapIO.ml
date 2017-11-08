@@ -232,14 +232,9 @@ let open_map s =
     failwith "The number of players specified in the \
 	      json file is not the same as which of the map file";
 
-  (* bof bof, à revoir *)
-  let human = Array.make nb_players "Humain" in
-  let list = (List.combine
-                (List.combine players_pos
-                              (List.map fst players_tmp))
-                (Array.to_list human))
-  in
-  set_map_and_players map_ (List.map (fun ((p,n),t) -> (p,n,t)) list)
+  set_map_and_players map_ (List.map (fun (name,n) ->
+                                (List.nth players_pos n,
+                                 name, "Humain")) players_tmp)
 (* ********************** Fin parsing **************************** *)
 
 	    
