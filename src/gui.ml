@@ -226,7 +226,7 @@ let chose_game () =
 let [@warning "-48"] new_game () =
   let ask_options mapname =
 
-    let (map,players_pos) = MapIO.parse_map mapname in (* TODO try exc !!! *)
+    let (map,players_pos) = MapIO.parse_map mapname in
     let nb_players = List.length players_pos in
 
     let dialog = GWindow.dialog ~title:"Créer une nouvelle partie"
@@ -333,7 +333,16 @@ let [@warning "-48"] new_game () =
   begin match filew#run(), filew#filename with
   | `OPEN, Some filename ->
      filew#destroy ();
-     ask_options filename;
+     (try ask_options filename;
+      with
+        Invalid_argument s
+      | Sys_error s ->
+         st#pop();
+         st_flash ~delay:7000 ("Erreur de chargement : "^s)
+      | _ ->
+         st#pop();
+         st_flash ~delay:7000 ("Erreur de chargement")
+     )
   | _ -> filew#destroy ();
          st#pop();
   end
