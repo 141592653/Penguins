@@ -1,7 +1,7 @@
 open OUnit2
        
 class virtual player (a_name:string) (a_pos:Hex.pos) =
-	object (self)
+	object (_)
 	  val name = a_name
 	  val mutable pos = a_pos
 	  val mutable next_move = (Hex.W,0)
@@ -23,7 +23,7 @@ class virtual player (a_name:string) (a_pos:Hex.pos) =
 	end
 
 class humanPlayer (a_name:string) (a_pos:Hex.pos) =
-object (self)
+object (_)
   inherit player a_name a_pos
   method is_human = true
 

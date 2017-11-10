@@ -223,7 +223,7 @@ let chose_game () =
          st#pop();
   end
 
-let [@warning "-48"] new_game () =
+let new_game () =
   let ask_options mapname =
 
     let (map,players_pos) = MapIO.parse_map mapname in
@@ -347,7 +347,7 @@ let [@warning "-48"] new_game () =
          st#pop();
   end
 
-let [@warning "-48"] main () =
+let main () =
   (* warning -48 because we like implicit elimination of optional arguments *)
 
   ignore (window#connect#destroy ~callback:quit);

@@ -303,7 +303,7 @@ let legal_move_n p m =
   let p' = ref p in
   let legal = ref true in 
   if n < 1 then legal := false;
-  for i = 1 to n do
+  for _ = 1 to n do
     p' := Hex.move !p' d;
     (*ici si on dépasse du tableau , l'accès lèvera une exception.*)
     try
