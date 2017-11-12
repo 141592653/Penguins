@@ -51,3 +51,11 @@ class humanPlayer : string -> Hex.pos ->
 	method  play : unit
 	method  is_human : bool
       end
+
+(** This class represents dumb players *)
+class naivePlayer : string -> Hex.pos ->
+      object
+	inherit player
+	method  play : unit
+	method  is_human : bool
+      end
